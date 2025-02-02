@@ -1,0 +1,9 @@
+---
+- name: Manage OS settings.
+  ansible.builtin.include_tasks: config/os.yaml
+
+- name: Manage packages.
+  ansible.builtin.include_tasks: software/packages.yaml
+
+- name: Manage services.
+  ansible.builtin.include_tasks: software/services.yaml

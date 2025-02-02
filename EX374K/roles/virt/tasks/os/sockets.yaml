@@ -1,0 +1,8 @@
+---
+- name: Ensure virtualization sockerts are running.
+  ansible.builtin.systemd_service:
+    socket_name: item
+    state: started
+  with_items: "{{ virt_socket_list }}"
+  notify:
+    - Validate Virtual Host

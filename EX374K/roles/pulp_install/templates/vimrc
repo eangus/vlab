@@ -1,0 +1,4 @@
+autocmd FileType yaml setlocal ai ts=2 sw=2 cul cuc
+autocmd FileType yml setlocal ai ts=2 sw=2 cul cuc
+set mouse=n et rnu nu
+colo desert

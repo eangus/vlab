@@ -1,0 +1,65 @@
+---
+# tasks file for vagrant
+- name: Install qemu-kvm
+  become: yes
+  ansible.builtin.yum:
+    name: "{{ vagrant_virt_packages }}"
+    state: present
+  register: results
+
+# - name: Enable and start the libvirt daemon
+#   become: yes
+#   service:
+#     name: libvirtd
+#     enabled: yes
+#     state: started
+
+- name: Install Vagrant
+  become: yes
+  ansible.builtin.yum:
+    name: vagrant
+    state: present
+
+# - name: Install Libvirt Plugins
+#   shell: vagrant plugin install vagrant-libvirt
+#   ignore_errors: yes
+
+- name: Add a box
+  ansible.builtin.command: "vagrant box add fedora/40-cloud-base --provider=libvirt"
+  become: no
+  ignore_errors: yes
+
+- name: Create a minimal Vagrantfile to test
+  block:
+  - name: Make vagrant file directory
+    become: no
+    ansible.builtin.file:
+      path: ~/test
+      state: directory
+
+  - name: Write test template.
+    become: no
+    ansible.builtin.template:
+      src: templates/fedora-vagrant.j2
+      dest: ~/test/Vagrantfile
+
+  - name: Test syntax.
+    become: no
+    ansible.builtin.shell:
+      cmd: "vagrant status"
+      args:
+        chdir: ~/test
+
+  - name: Start vagrant box.
+    become: no
+    ansible.builtin.shell:
+      cmd: "vagrant up"
+      args:
+        chdir: ~/test
+
+  - name: Show ssh configuration.
+    become: no
+    ansible.builtin.shell:
+      cmd: "vagrant ssh-config"
+      args:
+        chdir: ~/test

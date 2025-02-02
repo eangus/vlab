@@ -1,0 +1,3 @@
+---
+# defaults file for microshift
+crio_version: 1.21

@@ -1,0 +1,31 @@
+---
+clustername: dev
+
+domain: lab.local
+
+clusternetwork:
+  cidr: '10.100.0.0/14'
+  hostprefix: '23'
+
+hypervisor_packages:
+  - libvirt-devel
+  - libvirt-daemon-kvm
+  - libvirt-client
+  - libguestfs-tools-c
+  - virt-install
+
+lb_packages:
+  - haproxy
+
+dns_packages:
+  - bind
+
+bastion_ip: '10.2.2.1'
+
+bootstrap_ip: '10.2.2.100'
+
+master_node_ip: '10.2.2.101'
+
+worker_node_ip: '10.2.2.102'
+
+ssh_public_key: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC0vTY52fn5/WOupLv6bBbTXmGxqLzKRGjn3SbWfCznRPR3bTzK0Sa90RBdJIwu49pMp4+m82aVTBfvHQJFBpe8muzjKcN59PCTu0oIYxDrdP4djOBWcFMo7bQe/YQDENxeZ4nw/wRPL/0/Swhwi1BZKC4O/XSftKy25G7M/07ObKHPG6adZLerQGJLoJbvyJ+UQ2ceu6jnoaEMgDQX8lzyNIIzeNviNL/TTmDRGGxinz4PpTxGhVEk5FkVndeBC3JyZKrjH8WPP0MEoNGjUmHx/x1Cvi+owDEjOp9vjXG+mcC92C15SZ7ng90swO4/hDT8tZKLP5Xr3E0NhzPw0WYOMXrNSp5gHXMRavNWL21fpieX10iI2icRYBuv3Q1ECI3CdKLPXE+A4sTK1LD9fJvPJp6mQo1HKMT9DDvx9HVvkOJhkdk0z+CEKRF08bvmgKbxe3cst05QwLifSxkjKoQcWM3NeW0RaPxtAZ//GEXV0D1syWuycndaq1FfPFUSE+s='

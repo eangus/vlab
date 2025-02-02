@@ -1,0 +1,72 @@
+# .bashrc
+export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
+export PULP_SETTINGS={{ pulp_conf_file }}
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+        . /etc/bashrc
+fi
+
+# Uncomment the following line if you don't like systemctl's auto-paging feature:
+# export SYSTEMD_PAGER=
+
+jsonTable(){
+sed 's/\[//g;s/\}\,/-------/g;s/[",}{]//g;s/\]//g;s/results\:/-------/g' <(${@})|grep -vE '(count|next|previous)'|column| sed 's/^\s\+//g'
+echo ''
+}
+
+pulpstatus(){
+systemctl|grep -E '(pulpcore|redis|postgresql|nginx)'|sort
+}
+
+pulpstatus
+
+pulpGET(){
+curl -sk --request GET --header "Accept:application/json" --netrc-file ~/.pulp/netrc http://127.0.0.1:{{ pulp_api_port }}/pulp/api/v3/${@} | python -m json.tool
+}
+
+pulpPUT(){
+curl -sk --request PUT --header "Content-Type: application/json" --netrc-file ~/.pulp/netrc http://127.0.0.1:{{ pulp_api_port }}/pulp/api/v3/$1 -d $2 | python -m json.tool
+}
+
+pulpPOST(){
+curl -sk --request POST --header "Content-Type: application/json" --netrc-file ~/.pulp/netrc http://127.0.0.1:{{ pulp_api_port }}/pulp/api/v3/$1 -d $2 | python -m json.tool
+}
+
+pulpPATCH(){
+curl -sk --request PATCH --header "Content-Type: application/json" --netrc-file ~/.pulp/netrc http://127.0.0.1:{{ pulp_api_port }}/pulp/api/v3/$1 -d $2 | python -m json.tool
+}
+
+pulpDELETE(){
+curl -sk --request DELETE --header "Accept:application/json" --netrc-file ~/.pulp/netrc http://127.0.0.1:{{ pulp_api_port }}/pulp/api/v3/${@} | python -m json.tool
+}
+
+pulp-setup-repos(){
+cd ~/ansible/
+ansible-playbook pulp_repos.yml --tags setup
+cd -
+}
+
+pulp-sync-repos(){
+local DATE=$(date +%F)
+cd ~/ansible/
+(unbuffer ansible-playbook pulp_repos.yml --tags sync &>~/pulp-sync-${DATE}.run &)
+cd -
+tail -f ~/pulp-sync-${DATE}.run
+}
+
+pulp-list-tasks(){
+sed 's/\[//g;s/\}\,//g;s/[",}{]//g;s/\]//g' <(pulpGET tasks/?state=$1)|grep -vE '(next|previous)'|grep -Ev '^\s+$'| sed -z 's/error\:/\n-----------\n\terror\:/g'
+}
+
+pulp-cancel-task(){
+curl -sk --request PATCH --header "Content-Type: application/json" --netrc-file ~/.pulp/netrc http://127.0.0.1:{{ pulp_api_port }}$1 -d "state=canceled" | python -m json.tool || echo "Unable to cancel task $1"
+}
+
+pulp-list-repos(){
+local DATE=$(date +%s)
+pulpGET repositories/rpm/rpm/ > /tmp/file-${DATE}
+pulpGET repositories/deb/apt/ >> /tmp/file-${DATE}
+jsonTable cat /tmp/file-${DATE}
+rm -f /tmp/file-${DATE}
+}

@@ -1,0 +1,538 @@
+---
+- name: Setting local repositories.
+  hosts: pulp-server
+  vars:
+    pulp_passwd: '{{ pulp_admin_pw }}'
+    pulp_server: 'http://127.0.0.1:{{ pulp_api_port }}'
+    pulp_download_policy: 'on_demand'
+    pulp_download_concurrency: 5
+    pulp_proxy: '{{ site_proxy }}'
+  module_defaults: &pulp_module_defaults
+    pulp.squeezer.rpm_repository: &pulp_connection_details_rpm
+      pulp_url: "\{\{ pulp_server \}\}"
+      username: admin
+      password: "\{\{ pulp_passwd \}\}"
+      validate_certs: False
+    pulp.squeezer.rpm_remote:
+      <<: *pulp_connection_details_rpm
+    pulp.squeezer.rpm_sync:
+      <<: *pulp_connection_details_rpm
+    pulp.squeezer.rpm_distribution:
+      <<: *pulp_connection_details_rpm
+    pulp.squeezer.rpm_publication:
+      <<: *pulp_connection_details_rpm
+    pulp.squeezer.deb_repository: &pulp_connection_details_deb
+      pulp_url: "\{\{ pulp_server \}\}"
+      username: admin
+      password: "\{\{ pulp_passwd \}\}"
+      refresh_api_cache: True
+    pulp.squeezer.deb_remote:
+      <<: *pulp_connection_details_deb
+    pulp.squeezer.deb_sync:
+      <<: *pulp_connection_details_deb
+    pulp.squeezer.deb_distribution:
+      <<: *pulp_connection_details_deb
+    pulp.squeezer.deb_publication:
+      <<: *pulp_connection_details_deb
+  tasks:
+    - name: Centos 7 64 Repo
+      tags: centos_7_64
+      block:
+        - name: Initialize local CentOS 7 repo.
+          tags: sync_centos7_64, setup_centos7_64, setup, sync
+          pulp.squeezer.rpm_repository:
+            name: "local_cent_7_64"
+            description: "Centos 7"
+            state: present
+          register: repo_result
+
+        - name: Define remote CentOS 7 os repo.
+          tags: sync_centos7_64, setup_centos7_64, setup, sync
+          pulp.squeezer.rpm_remote:
+            name: "remote_cent_7_64_os"
+            url: http://mirror.centos.org/centos/7/os/x86_64/
+            download_concurrency: "\{\{ pulp_download_concurrency \}\}"
+            policy: "\{\{ pulp_download_policy \}\}"
+            proxy_url: "\{\{ pulp_proxy \}\}"
+            state: present
+
+        - name: Define remote CentOS 7 updates repo.
+          tags: sync_centos7_64, setup_centos7_64, setup, sync
+          pulp.squeezer.rpm_remote:
+            name: "remote_cent_7_64_updates"
+            url: http://mirror.centos.org/centos/7/updates/x86_64/
+            download_concurrency: "\{\{ pulp_download_concurrency \}\}"
+            policy: "\{\{ pulp_download_policy \}\}"
+            proxy_url: "\{\{ pulp_proxy \}\}"
+            state: present
+
+        - name: Define remote CentOS 7 extras repo.
+          tags: sync_centos7_64, setup_centos7_64, setup, sync
+          pulp.squeezer.rpm_remote:
+            name: "remote_cent_7_64_extras"
+            url: http://mirror.centos.org/centos/7/extras/x86_64/
+            download_concurrency: "\{\{ pulp_download_concurrency \}\}"
+            policy: "\{\{ pulp_download_policy \}\}"
+            proxy_url: "\{\{ pulp_proxy \}\}"
+            state: present
+
+        - name: Define remote CentOS 7 plus repo.
+          tags: sync_centos7_64, setup_centos7_64, setup, sync
+          pulp.squeezer.rpm_remote:
+            name: "remote_cent_7_64_plus"
+            url: http://mirror.centos.org/centos/7/centosplus/x86_64/
+            download_concurrency: "\{\{ pulp_download_concurrency \}\}"
+            policy: "\{\{ pulp_download_policy \}\}"
+            proxy_url: "\{\{ pulp_proxy \}\}"
+            state: present
+          register: remote_result
+
+        - name: Sync remote content to local CentOS 7 repo.
+          tags: never, sync_centos7_64, sync
+          pulp.squeezer.rpm_sync:
+            remote: "\{\{ item \}\}"
+            repository: local_cent_7_64
+          with_items:
+            - remote_cent_7_64_os
+            - remote_cent_7_64_updates
+            - remote_cent_7_64_extras
+            - remote_cent_7_64_plus
+
+        - name: Retrieve repository facts
+          tags: distribute_centos7_64, distribute, sync_centos7_64, sync
+          uri:
+            url: "\{\{ pulp_server \}\}/pulp/api/v3/repositories/rpm/rpm/?name=local_cent_7_64"
+            user: admin
+            password: "\{\{ pulp_passwd \}\}"
+            method: GET
+            headers:
+              Content-Type: appliation/json
+            force_basic_auth: yes
+            status_code: [200, 201, 202]
+          register: repo_version
+
+        - name: Check if publish task running
+          tags: distribute_centos7_64, distribute, sync_centos7_64, sync
+          uri:
+            url: "\{\{ pulp_server \}\}/pulp/api/v3/tasks/?state=running&name=pulp_rpm.app.tasks.publishing.publish&reserved_resources_record=\{\{ repo_version.json.results[0].pulp_href \}\}"
+            user: admin
+            password: "\{\{ pulp_passwd \}\}"
+            method: GET
+            headers:
+              Content-Type: appliation/json
+            force_basic_auth: yes
+            status_code: [200, 201, 202]
+          register: task_gate
+          
+        - name: Pause play until task completes.
+          tags: distribute_centos7_64, distribute, sync_centos7_64, sync
+          uri:
+            url: "\{\{ pulp_server \}\}\{\{ task_gate.json.results[0].pulp_href \}\}"
+            follow_redirects: none
+            user: admin
+            password: "\{\{ pulp_passwd \}\}"
+            method: GET
+            headers:
+              Content-Type: appliation/json
+            force_basic_auth: yes
+            status_code: [200, 201, 202]
+          register: publish_task
+          until: publish_task.json.state != "running"
+          retries: 720 # 720 * 60 seconds = 12 hours 
+          delay: 60 # Every 60 seconds
+          when: 'task_gate.json.results[0].state is defined'
+
+        - name: Define publication of repository
+          tags: distribute_centos7_64, distribute, sync_centos7_64, sync
+          pulp.squeezer.rpm_publication:
+            repository: local_cent_7_64
+            state: present
+          register: publication_result
+          when: 'task_gate.json.results[0].state is not defined'
+
+        - name: Check if publish task running
+          tags: distribute_centos7_64, distribute, sync_centos7_64, sync
+          uri:
+            url: "\{\{ pulp_server \}\}/pulp/api/v3/tasks/?state=running&name=pulp_rpm.app.tasks.publishing.publish&reserved_resources_record=\{\{ repo_version.json.results[0].pulp_href \}\}"
+            user: admin
+            password: "\{\{ pulp_passwd \}\}"
+            method: GET
+            headers:
+              Content-Type: appliation/json
+            force_basic_auth: yes
+            status_code: [200, 201, 202]
+          register: task_check
+          
+        - name: Pause play until task completes.
+          tags: distribute_centos7_64, distribute, sync_centos7_64, sync
+          uri:
+            url: "\{\{ pulp_server \}\}\{\{ task_check.json.results[0].pulp_href \}\}"
+            follow_redirects: none
+            user: admin
+            password: "\{\{ pulp_passwd \}\}"
+            method: GET
+            headers:
+              Content-Type: appliation/json
+            force_basic_auth: yes
+            status_code: [200, 201, 202]
+          register: publish_task
+          until: publish_task.json.state != "running"
+          retries: 720 # 720 * 60 seconds = 12 hours 
+          delay: 60 # Every 60 seconds
+          when: 'task_check.json.results[0].state is defined'
+
+        - name: Distribute publication of repository
+          tags: distribute_centos7_64, distribute, sync_centos7_64, sync
+          pulp.squeezer.rpm_distribution:
+            name: on-prem-centos-7
+            base_path: centos/7/x86_64
+            publication: "\{\{ publication_result.publication.pulp_href \}\}"
+            state: present
+
+    - name: Oracle Enterprise Linux 8 OS Repo
+      tags: oel8
+      block:
+        - name: Initialize local OL8 repo.
+          tags: sync_oel, setup_oel, setup, sync
+          pulp.squeezer.rpm_repository:
+            name: "local_ol8_64"
+            description: "My Oracle Enterprise Linux 8 OS"
+            state: present
+          register: repo_result
+
+        - name: Define remote OL8 repo.
+          tags: sync_oel, setup_oel, setup, sync
+          pulp.squeezer.rpm_remote:
+            name: "remote_ol8_baseos"
+            url: http://yum.oracle.com/repo/OracleLinux/OL8/baseos/latest/x86_64/
+            download_concurrency: "\{\{ pulp_download_concurrency \}\}"
+            policy: "\{\{ pulp_download_policy \}\}"
+            proxy_url: "\{\{ pulp_proxy \}\}"
+            state: present
+
+        - name: Define remote OL8 repo.
+          tags: sync_oel, setup_oel, setup, sync
+          pulp.squeezer.rpm_remote:
+            name: "remote_ol8_appstream"
+            url: http://yum.oracle.com/repo/OracleLinux/OL8/appstream/x86_64/
+            download_concurrency: "\{\{ pulp_download_concurrency \}\}"
+            policy: "\{\{ pulp_download_policy \}\}"
+            proxy_url: "\{\{ pulp_proxy \}\}"
+            state: present
+
+        - name: Define remote OL8 repo.
+          tags: sync_oel, setup_oel, setup, sync
+          pulp.squeezer.rpm_remote:
+            name: "remote_ol8_codeready_builder"
+            url: http://yum.oracle.com/repo/OracleLinux/OL8/codeready/builder/x86_64/
+            download_concurrency: "\{\{ pulp_download_concurrency \}\}"
+            policy: "\{\{ pulp_download_policy \}\}"
+            proxy_url: "\{\{ pulp_proxy \}\}"
+            state: present
+
+        - name: Define remote OL8 repo.
+          tags: sync_oel, setup_oel, setup, sync
+          pulp.squeezer.rpm_remote:
+            name: "remote_ol8_addons"
+            url: http://yum.oracle.com/repo/OracleLinux/OL8/addons/x86_64/
+            download_concurrency: "\{\{ pulp_download_concurrency \}\}"
+            policy: "\{\{ pulp_download_policy \}\}"
+            proxy_url: "\{\{ pulp_proxy \}\}"
+            state: present
+
+        - name: Define remote OL8 repo.
+          tags: sync_oel, setup_oel, setup, sync
+          pulp.squeezer.rpm_remote:
+            name: "remote_ol8_uekr6"
+            url: http://yum.oracle.com/repo/OracleLinux/OL8/uekr6/x86_64/
+            download_concurrency: "\{\{ pulp_download_concurrency \}\}"
+            policy: "\{\{ pulp_download_policy \}\}"
+            proxy_url: "\{\{ pulp_proxy \}\}"
+            state: present
+
+        - name: Define remote OL8 repo.
+          tags: sync_oel, setup_oel, setup, sync
+          pulp.squeezer.rpm_remote:
+            name: "remote_ol8_uekr6_rdma"
+            url: http://yum.oracle.com/repo/OracleLinux/OL8/uekr6/RDMA/x86_64/
+            download_concurrency: "\{\{ pulp_download_concurrency \}\}"
+            policy: "\{\{ pulp_download_policy \}\}"
+            proxy_url: "\{\{ pulp_proxy \}\}"
+            state: present
+
+        - name: Sync remote content to local OL8 repo.
+          tags: never, sync_oel, sync
+          pulp.squeezer.rpm_sync:
+            remote: "\{\{ item \}\}"
+            repository: local_ol8_64
+          with_items:
+            - remote_ol8_baseos
+            - remote_ol8_appstream
+            - remote_ol8_codeready_builder
+            - remote_ol8_addons
+            - remote_ol8_uekr6
+            - remote_ol8_uekr6_rdma
+
+        - name: Retrieve repository facts
+          tags: distribute_oel, distribute, sync_oel, sync
+          uri:
+            url: "\{\{ pulp_server \}\}/pulp/api/v3/repositories/rpm/rpm/?name=local_ol8_64"
+            user: admin
+            password: "\{\{ pulp_passwd \}\}"
+            method: GET
+            headers:
+              Content-Type: appliation/json
+            force_basic_auth: yes
+            status_code: [200, 201, 202]
+          register: repo_version
+
+        - name: Check if publish task running
+          tags: distribute_oel, distribute, sync_oel, sync
+          uri:
+            url: "\{\{ pulp_server \}\}/pulp/api/v3/tasks/?state=running&name=pulp_rpm.app.tasks.publishing.publish&reserved_resources_record=\{\{ repo_version.json.results[0].pulp_href \}\}"
+            user: admin
+            password: "\{\{ pulp_passwd \}\}"
+            method: GET
+            headers:
+              Content-Type: appliation/json
+            force_basic_auth: yes
+            status_code: [200, 201, 202]
+          register: task_gate
+          
+        - name: Pause play until task completes.
+          tags: distribute_oel, distribute, sync_oel, sync
+          uri:
+            url: "\{\{ pulp_server \}\}\{\{ task_gate.json.results[0].pulp_href \}\}"
+            follow_redirects: none
+            user: admin
+            password: "\{\{ pulp_passwd \}\}"
+            method: GET
+            headers:
+              Content-Type: appliation/json
+            force_basic_auth: yes
+            status_code: [200, 201, 202]
+          register: publish_task
+          until: publish_task.json.state != "running"
+          retries: 720 # 720 * 60 seconds = 12 hours 
+          delay: 60 # Every 60 seconds
+          when: 'task_gate.json.results[0].state is defined'
+
+        - name: Define publication of repository
+          tags: distribute_oel, distribute, sync_oel, sync
+          pulp.squeezer.rpm_publication:
+            repository: local_ol8_64
+            state: present
+          register: publication_result
+          when: 'task_gate.json.results[0].state is not defined'
+
+        - name: Check if publish task running
+          tags: distribute_oel, distribute, sync_oel, sync
+          uri:
+            url: "\{\{ pulp_server \}\}/pulp/api/v3/tasks/?state=running&name=pulp_rpm.app.tasks.publishing.publish&reserved_resources_record=\{\{ repo_version.json.results[0].pulp_href \}\}"
+            user: admin
+            password: "\{\{ pulp_passwd \}\}"
+            method: GET
+            headers:
+              Content-Type: appliation/json
+            force_basic_auth: yes
+            status_code: [200, 201, 202]
+          register: task_check
+          
+        - name: Pause play until task completes.
+          tags: distribute_oel, distribute, sync_oel, sync
+          uri:
+            url: "\{\{ pulp_server \}\}\{\{ task_check.json.results[0].pulp_href \}\}"
+            follow_redirects: none
+            user: admin
+            password: "\{\{ pulp_passwd \}\}"
+            method: GET
+            headers:
+              Content-Type: appliation/json
+            force_basic_auth: yes
+            status_code: [200, 201, 202]
+          register: publish_task
+          until: publish_task.json.state != "running"
+          retries: 720 # 720 * 60 seconds = 12 hours 
+          delay: 60 # Every 60 seconds
+          when: 'task_check.json.results[0].state is defined'
+
+        - name: Distribute publication of repository
+          tags: distribute_oel, distribute, sync_oel, sync
+          pulp.squeezer.rpm_distribution:
+            name: on-prem-oel-8
+            base_path: oel/8/x86_64
+            publication: "\{\{ publication_result.publication.pulp_href \}\}"
+            state: present
+
+    - name: Ubuntu Repos
+      tags: ubuntu
+      block:
+        - name: Initialize local Ubuntu repo.
+          tags: sync_ubuntu, setup_ubuntu, setup, sync
+          pulp.squeezer.deb_repository:
+            name: local_ubuntu
+            description: "Ubuntu"
+            state: present
+          register: repo_result
+
+        - name: Define remote Ubuntu 16.04 repo.
+          tags: sync_ubuntu, setup_ubuntu, setup, sync
+          pulp.squeezer.deb_remote:
+            name: remote_ubuntu_16_04
+            distributions: xenial xenial-backports xenial-security xenial-updates
+            components: main restricted universe multiverse
+            architectures: amd64 i386
+            url: http://us.archive.ubuntu.com/ubuntu
+            download_concurrency: "\{\{ pulp_download_concurrency \}\}"
+            policy: "\{\{ pulp_download_policy \}\}"
+            proxy_url: "\{\{ pulp_proxy \}\}"
+            state: present
+
+        - name: Define remote Ubuntu 18.04 repo.
+          tags: sync_ubuntu, setup_ubuntu, setup, sync
+          pulp.squeezer.deb_remote:
+            name: remote_ubuntu_18_04
+            distributions: bionic bionic-backports bionic-security bionic-updates
+            components: main restricted universe multiverse
+            architectures: amd64 i386
+            url: http://us.archive.ubuntu.com/ubuntu
+            download_concurrency: "\{\{ pulp_download_concurrency \}\}"
+            policy: "\{\{ pulp_download_policy \}\}"
+            proxy_url: "\{\{ pulp_proxy \}\}"
+            state: present
+
+        - name: Define remote Ubuntu 20.04 repo.
+          tags: sync_ubuntu, setup_ubuntu, setup, sync
+          pulp.squeezer.deb_remote:
+            name: remote_ubuntu_20_04
+            distributions: focal focal-backports focal-security focal-updates
+            components: main restricted universe multiverse
+            architectures: amd64
+            url: http://us.archive.ubuntu.com/ubuntu
+            download_concurrency: "\{\{ pulp_download_concurrency \}\}"
+            policy: "\{\{ pulp_download_policy \}\}"
+            proxy_url: "\{\{ pulp_proxy \}\}"
+            state: present
+
+        - name: Sync remote content to local Ubuntu repo.
+          tags: never, sync_ubuntu, sync
+          pulp.squeezer.deb_sync:
+            remote: "\{\{ item \}\}"
+            repository: local_ubuntu
+          ignore_errors: yes
+          with_items:
+            - remote_ubuntu_16_04
+            - remote_ubuntu_18_04
+            - remote_ubuntu_20_04
+
+        - name: Retrieve repository facts
+          tags: distribute_ubuntu, distribute, sync_ubuntu, sync
+          uri:
+            url: "\{\{ pulp_server \}\}/pulp/api/v3/repositories/deb/apt/?name=local_ubuntu"
+            user: admin
+            password: "\{\{ pulp_passwd \}\}"
+            method: GET
+            headers:
+              Content-Type: appliation/json
+            force_basic_auth: yes
+            status_code: [200, 201, 202]
+          register: repo_version
+
+        - name: Set current version variable
+          tags: distribute_ubuntu, distribute, sync_ubuntu, sync
+          when: 'repo_version.json.results[0].latest_version_href is defined'
+          set_fact:
+            current_repo_version: "\{\{ repo_version.json.results[0].latest_version_href \}\}"
+
+        - name: Check publication of repository
+          tags: distribute_ubuntu, distribute, sync_ubuntu, sync
+          uri:
+            url: "\{\{ pulp_server \}\}/pulp/api/v3/publications/deb/verbatim/?repository_version=\{\{ current_repo_version \}\}"
+            user: admin
+            password: "\{\{ pulp_passwd \}\}"
+            method: GET
+            headers:
+              Content-Type: appliation/json
+            force_basic_auth: yes
+            status_code: [200, 201, 202]
+          register: current_publication
+
+        - name: Set current version variable
+          tags: distribute_ubuntu, distribute, sync_ubuntu, sync
+          when: 'current_publication.json.results[0].repository_version is defined'
+          set_fact:
+            current_publication_version: "\{\{ current_publication.json.results[0].repository_version | default('null') \}\}"
+
+        - name: Set repo href variable
+          tags: distribute_ubuntu, distribute, sync_ubuntu, sync
+          when: 'repo_version.json.results[0].pulp_href'
+          set_fact:
+            repo_href: "\{\{ repo_version.json.results[0].pulp_href \}\}"
+
+        - name: Check if publish task running
+          tags: distribute_ubuntu, distribute, sync_ubuntu, sync
+          uri:
+            url: "\{\{ pulp_server \}\}/pulp/api/v3/tasks/?state=running&name=pulp_deb.app.tasks.publishing.publish&reserved_resources_record=\{\{ repo_href \}\}"
+            user: admin
+            password: "\{\{ pulp_passwd \}\}"
+            method: GET
+            headers:
+              Content-Type: appliation/json
+            force_basic_auth: yes
+            status_code: [200, 201, 202]
+          register: task_check
+
+        - name: Set task variable.
+          tags: distribute_ubuntu, distribute, sync_ubuntu, sync
+          when: 'task_check.json.results[0].state is defined'
+          set_fact:
+            running_pub_task: "\{\{ task_check.json.results[0].pulp_href \}\}"
+
+        - name: Define publication of repository
+          tags: distribute_ubuntu, distribute, sync_ubuntu, sync
+          uri:
+            url: "\{\{ pulp_server \}\}/pulp/api/v3/publications/deb/apt/"
+            user: admin
+            password: "\{\{ pulp_passwd \}\}"
+            method: POST
+            body: "repository_version=\{\{ current_repo_version \}\}"
+            force_basic_auth: yes
+            status_code: [200, 201, 202]
+          when: '(task_check.json.results[0].state is not defined and current_repo_version != current_publication_version) or (task_check.json.results[0].state is not defined and current_publication_version is not defined)'
+
+        - name: Pause play until task completes.
+          tags: distribute_ubuntu, distribute, sync_ubuntu, sync
+          uri:
+            url: "\{\{ pulp_server \}\}\{\{ running_pub_task \}\}"
+            follow_redirects: none
+            user: admin
+            password: "\{\{ pulp_passwd \}\}"
+            method: GET
+            headers:
+              Content-Type: appliation/json
+            force_basic_auth: yes
+            status_code: [200, 201, 202]
+          register: publish_task
+          until: publish_task.json.state != "running"
+          retries: 720 # 720 * 60 seconds = 12 hours 
+          delay: 60 # Every 60 seconds
+          when: 'task_check.json.results[0].state is defined'
+
+        - name: Set current version variable
+          tags: distribute_ubuntu, distribute, sync_ubuntu, sync
+          set_fact:
+            current_publication_version: "\{\{ current_publication.json.results[0].repository_version | default('') \}\}"
+
+        - name: Check publication version
+          tags: distribute_ubuntu, distribute, sync_ubuntu, sync
+          when: current_publication_version == ""
+          fail:
+            msg: "'current_publication_version' is undefined. Publication task has not yet complete. Check task.\n pulpGET \{\{ running_pub_task \}\}"
+
+        - name: Distribute publication of repository
+          tags: distribute_ubuntu, distribute, sync_ubuntu, sync
+          pulp.squeezer.deb_distribution:
+            name: on-prem-ubuntu
+            base_path: ubuntu
+            publication: "\{\{ current_publication.json.results[0].pulp_href \}\}"
+            state: present

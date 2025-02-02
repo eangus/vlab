@@ -1,0 +1,7 @@
+{
+  "name": "remote_cent_7_64_plus",
+  "url": "http://mirror.centos.org/centos/7/plus/x86_64/",
+  "proxy_url": "string",
+  "download_concurrency": 5,
+  "policy": "on_demand"
+}

@@ -1,0 +1,21 @@
+---
+base_domain: "lab.local"
+
+base_yum_green_list:
+  - git
+  - aide
+
+base_yum_red_list: 
+  - ntp
+
+base_yum_base_list:
+  - chrony
+  - bash-completion
+  - vim
+  - wget
+  - curl
+  - policycoreutils-python-utils
+  - yara
+  - scap-security-guide
+  - openscap
+  - expect

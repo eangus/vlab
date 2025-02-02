@@ -1,0 +1,29 @@
+---
+# defaults file for patch_satellite
+#install_destination: /var/lib/pulp
+install_destination: /opt/pulp
+media_root: "{{ install_destination }}/media"
+ansible_dir: "{{ install_destination }}/ansible"
+postgresql_version: rh-postgresql96
+service_dns_name: "pulp.eangus.info"
+site_proxy: ""
+pulp_api_port: 8080
+pulp_content_port: 8000
+pulp_conf_dir: /etc/pulp
+pulp_conf_file: "{{ pulp_conf_dir }}/settings.py"
+pulp_dirs:
+  - "{{ install_destination }}"
+  - "{{ install_destination }}/exports"
+  - "{{ install_destination }}/tmp"
+  - "{{ media_root }}"
+  - "{{ pulp_conf_dir }}"
+  - "{{ ansible_dir }}"
+  - "{{ install_destination }}/.pulp"
+  - "{{ install_destination }}/json"
+  - "{{ install_destination }}/json/remotes"
+  - "{{ install_destination }}/json/repositories"
+  - "{{ install_destination }}/json/publications"
+  - "{{ install_destination }}/json/distributions"
+pulp_secret: OTgxYjM0OGY0Yj-M+zMDdhYThjNzMyZjgzZmExZjA4ZDY2YzczMGFlYmUyNDgyY2Nj
+pulp_admin_pw: Password
+pulp_db_pw: 5a9q+zllZGZiMmQ2MzdjMjRiOWQ2YzM4ZjI3YmIwMTBkNTBm

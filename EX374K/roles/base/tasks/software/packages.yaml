@@ -1,0 +1,27 @@
+---
+- name: Base packages installed.
+  ansible.builtin.package:
+    name: '{{ base_yum_base_list }}'
+    state: present
+    update_cache: yes
+  tags: packages:base
+
+- name: Redlist packages removed.
+  ansible.builtin.package:
+    name: '{{ base_yum_red_list }}'
+    state: absent
+  tags: packages:redlist
+
+- name: Greenlist packages installed.
+  ansible.builtin.package:
+    name: '{{ base_yum_green_list }}'
+    state: present
+  tags: packages:greenlist
+
+- name: Update all packages.
+  ansible.builtin.package:
+    name: '*'
+    state: latest
+    update_only: yes
+    update_cache: yes
+  tags: packages:update

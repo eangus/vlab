@@ -1,0 +1,28 @@
+---
+# handlers file for patch_satellite
+- name: Enable Services
+  systemd:
+    name: "{{ item }}"
+    enabled: true
+  with_items: "{{ enabled_services }}"
+
+
+- name: Restart Pulp
+  systemd:
+    name: "{{ item }}"
+    state: restarted
+  with_items: "{{ enabled_services }}"
+
+- name: Restart Nginx
+  systemd:
+    name: rh-nginx18-nginx.service
+    state: restarted
+
+- name: Reboot
+  reboot:
+    reboot_timeout: 360
+
+- name: Initialize repositories
+  become: true
+  become_user: pulp
+  shell: cd ~/ansible/ && ansible-playbook pulp_repos.yml --tags setup

@@ -1,0 +1,6 @@
+[rhel-7-server-sat-rpms]
+name = Red Hat Enterprise Linux 7 Sat Local
+baseurl = http://10.1.1.100/sat-local
+enabled = 1
+gpgcheck = 1
+gpgkey = file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release

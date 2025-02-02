@@ -1,0 +1,18 @@
+---
+# tasks file for reverse-proxy
+name: Install packages and dependencies.
+package:
+  name:
+    - nginx
+    - firewalld
+  state: latest
+
+name: Deploy Nginx configuration files.
+template:
+
+name: Deploy custom scripts.
+copy:
+
+name: Setup firewalld configuration.
+include: firewalld.yml
+call:

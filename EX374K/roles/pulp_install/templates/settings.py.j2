@@ -1,0 +1,23 @@
+CONTENT_HOST = "{{ service_dns_name }}"
+CONTENT_ORIGIN = "http://{{ service_dns_name }}"
+SECRET_KEY = "{{ pulp_secret }}"
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "pulp",
+        "USER": "pulp",
+        "PASSWORD": "{{ pulp_db_pw }}",
+        "CONN_MAX_AGE": 0,
+    },
+}
+
+REDIS_HOST = "localhost"
+REDIS_PORT = "6379"
+REDIS_DB = 8
+
+MEDIA_ROOT = "{{ media_root }}"
+FILE_UPLOAD_TEMP_DIR = "{{ install_destination }}/tmp"
+WORKING_DIRECTORY = "{{ install_destination }}"
+
+TOKEN_AUTH_DISABLED=True

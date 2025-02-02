@@ -1,0 +1,11 @@
+- name: Ensure LibVirt packages are installed and latest.
+  package:
+    name: '{{ hypervisor_packages }}'
+    state: latest
+
+- name: Ensure Libvirtd is running an enabled.
+  systemd:
+    name: libvirtd
+    enabled: yes
+    masked: no
+    state: started

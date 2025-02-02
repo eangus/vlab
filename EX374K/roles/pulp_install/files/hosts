@@ -1,0 +1,2 @@
+[pulp-server]
+local ansible_connection=local

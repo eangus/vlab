@@ -1,0 +1,15 @@
+- name: Ensure LibVirt packages are installed and latest.
+  package:
+    name: '{{ hypervisor_packages }}'
+    state: latest
+
+- name: Deploy haproxy.cfg
+  copy:
+    src: templates/lb/haproxy.cfg.j2
+    desc: /etc/haproxy/haproxy.cfg
+
+- name: Enable HAProxy Service is enable and serving.
+  systemd:
+    name: haproxy
+    state: 'running'
+    enabled: yes

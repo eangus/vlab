@@ -1,0 +1,36 @@
+---
+disabled_repos:
+  - rhel-7-server-satellite-tools-6.7-rpms
+  - rhel-7-server-ansible-2.8-rpms
+  - rhel-7-server-satellite-maintenance-6-rpms
+
+enabled_repos:
+  - rhel-server-rhscl-7-rpms
+  - rhel-7-server-rpms
+
+package_list:
+  - vim
+  - bash-completion
+  - ansible
+  - expect
+  - rh-redis5
+  - "{{ postgresql_version }}*"
+  - rh-nginx18*
+  - libsolv
+  - libmodulemd
+  - python3-pulpcore
+  - python3-pulp-rpm
+
+enabled_services:
+  - rh-redis5-redis.service
+  - rh-redis5-redis-sentinel.service
+  - "{{ postgresql_version }}-postgresql.service"
+  - pulpcore-content.service
+  - pulpcore-api.service
+  - pulpcore-resource-manager.service
+  - pulpcore-worker@1.service
+  - pulpcore-worker@2.service
+  - rh-nginx18-nginx.service
+
+#activation_key: ""
+#org_name: ""

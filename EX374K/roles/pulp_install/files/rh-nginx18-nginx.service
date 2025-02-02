@@ -1,0 +1,16 @@
+[Unit]
+Description=The nginx HTTP and reverse proxy server
+After=syslog.target network.target remote-fs.target nss-lookup.target
+
+[Service]
+Type=forking
+PIDFile=/var/opt/rh/rh-nginx18/run/nginx/nginx.pid
+ExecStartPre=/opt/rh/rh-nginx18/root/usr/sbin/nginx -t
+ExecStart=/opt/rh/rh-nginx18/root/usr/sbin/nginx
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s QUIT $MAINPID
+PrivateTmp=true
+Nice=-16
+
+[Install]
+WantedBy=multi-user.target

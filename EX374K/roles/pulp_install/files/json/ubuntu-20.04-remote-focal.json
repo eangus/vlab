@@ -1,0 +1,10 @@
+{
+  "name": "remote_ubuntu_20_04",
+  "url": "http://us.archive.ubuntu.com/ubuntu",
+  "distributions": "focal focal-backports focal-security focal-updates",
+  "components": "main restricted universe multiverse",
+  "architectures": "amd64",
+  "proxy_url": "string",
+  "download_concurrency": 5,
+  "policy": "on_demand"
+}

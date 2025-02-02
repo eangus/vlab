@@ -1,0 +1,11 @@
+- name: Ensure OKD network can reach DNS.
+  shell: firewall-cmd --add-rich-rule='rule family="ipv4" source address="LIBVIRT_OKD_SUBNET" service name="dns" accept' --permanent
+
+- name: Ensure OKD network can reach the OKD API.
+  shell: firewall-cmd --add-rich-rule='rule family="ipv4" source address="LIBVIRT_OKD_SUBNET" port port="6443" protocol="tcp" accept' --permanent
+
+- name: Ensure OKD network can reach MachineConfig API.
+  shell: firewall-cmd --add-rich-rule='rule family="ipv4" source address="LIBVIRT_OKD_SUBNET" port port="22623" protocol="tcp" accept' --permanent
+
+- name: Ensure Firewalld is reloaded.
+  shell: firewall-cmd --reload

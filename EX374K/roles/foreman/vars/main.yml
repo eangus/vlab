@@ -1,0 +1,3 @@
+---
+# vars file for foreman
+vbox_hostname: vdevbox.lab.local

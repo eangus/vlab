@@ -1,0 +1,6 @@
+---
+# vars file for oscap-scan
+oval_dir: /var/oval/
+oscap_packages:
+  - openscap-scanner
+  - openscap-utils

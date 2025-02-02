@@ -1,0 +1,27 @@
+---
+- name: Lab Redlist packages removed.
+  yum:
+    name: '{{ lab_yum_red_list }}'
+    state: absent
+  tags: packages:redlist
+
+- name: Lab Greenlist packages installed.
+  yum:
+    name: '{{ lab_yum_green_list }}'
+    state: latest
+  tags: packages:greenlist
+
+- name: Update all packages.
+  yum:
+    name: '*'
+    state: latest
+    update_only: yes
+    update_cache: yes
+  tags: packages:update
+
+- name: Install terraform-provider-libvirt
+  yum:
+    name: https://github.com/eangus/pub_lab/raw/main/rpmbuild/RPMS/x86_64/terraform-provider-libvirt-0.6.3.x86_64.rpm
+    state: present
+    disable_gpg_check: true
+  tags: packages:custom

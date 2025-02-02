@@ -1,0 +1,32 @@
+server {
+	listen 80;
+#	server_name {{ service_dns_name }};
+#
+#	location / {
+#         rewrite        ^ https://{{ service_dns_name }}$request_uri? permanent;
+#	}
+#}
+#
+#server {
+#	listen 443 ssl;
+#	server_name {{ service_dns_name }};
+#	ssl_certificate           /etc/ssl/certs/ssl-cert-snakeoil.pem;
+#	ssl_certificate_key       /etc/ssl/certs/ssl-cert-snakeoil.key;
+#
+	location / {
+	 return 301 /pulp/content/;
+	}
+
+	location /pulp/content/ {
+	 proxy_pass          http://127.0.0.1:{{ pulp_content_port }}/pulp/content/;
+	 proxy_redirect      http://127.0.0.1:{{ pulp_content_port }}/pulp/content/ http://{{ service_dns_name }}/pulp/content/;
+	 proxy_buffering off;
+	 proxy_set_header Host $host;
+	 proxy_set_header X-Real-IP  $remote_addr;
+	 proxy_set_header X-Forwarded-For $remote_addr;
+	 gzip off;
+	 allow all;
+	 limit_rate_after 500k;
+     limit_rate       50k;
+	}
+}

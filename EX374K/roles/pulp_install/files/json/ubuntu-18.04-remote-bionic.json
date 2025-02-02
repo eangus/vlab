@@ -1,0 +1,10 @@
+{
+  "name": "remote_ubuntu_18_04",
+  "url": "http://us.archive.ubuntu.com/ubuntu",
+  "distributions": "bionic bionic-backports bionic-security bionic-updates",
+  "components": "main restricted universe multiverse",
+  "architectures": "amd64 i386",
+  "proxy_url": "string",
+  "download_concurrency": 5,
+  "policy": "on_demand"
+}

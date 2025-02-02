@@ -1,0 +1,30 @@
+# Create as pulpcore-worker@.service file.
+[Unit]
+Description=Pulp RQ Worker
+After=pulpcore-resource-manager.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/default/pulp-workers
+EnvironmentFile=-/etc/default/pulp-workers-%i
+Environment="DJANGO_SETTINGS_MODULE=pulpcore.app.settings"
+Environment="PULP_SETTINGS={{ pulp_conf_file }}"
+User=pulp
+Group=pulp
+WorkingDirectory={{ install_destination }}
+RuntimeDirectory=pulpcore-worker-%i
+ExecStart=/usr/libexec/pulpcore/rq worker \
+          -w pulpcore.tasking.worker.PulpWorker \
+          -c 'pulpcore.rqconfig' \
+          --disable-job-desc-logging
+
+SyslogIdentifier=pulpcore-worker-%i
+
+# This provides reconnect support for PostgreSQL and Redis. Without reconnect support, if either
+# is not available at startup or becomes disconnected, this process will die and not respawn.
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

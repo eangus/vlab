@@ -1,0 +1,292 @@
+---
+- name: Account validation, and Install prep.
+  tags: always, os_user
+  block:
+    - name: Create service account.
+      user:
+        name: pulp
+        home: "{{ install_destination }}"
+        comment: "Pulp3 local system account"
+        system: True
+        shell: /bin/bash
+
+    - name: Create working directories.
+      tags: ansible_setup
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0770'
+        owner: pulp
+        group: pulp
+      with_items: "{{ pulp_dirs }}"
+
+    - name: Create Pulpcore API functions file.
+      template:
+        backup: true
+        src: templates/pulp_bashrc.j2
+        dest: "{{ install_destination }}/.bashrc"
+
+    - name: Create Pulpcore settings file.
+      template:
+        backup: true
+        src: templates/settings.py.j2
+        dest: /etc/pulp/settings.py
+        owner: pulp
+        group: pulp
+
+- name: Varify subscription and installed packages.
+  tags: never, install, subscription
+  block:
+    - name: Configure local repo.
+      copy:
+        src: files/local.repo
+        dest: /etc/yum.repos.d/local.repo
+#    - name: Setup subscription
+#      redhat_subscription:
+#        state: present
+#        activationkey: "{{ activation_key }}"
+#        org_id: "{{ org_name }}"
+#        force_register: true
+#
+#    - name: Disable repos
+#      rhsm_repository:
+#        name: "{{ item }}"
+#        state: disabled
+#      ignore_errors: yes
+#      with_items: "{{ lookup('vars', 'disabled_repos') }}"
+
+    - name: List repos
+      shell: yum repolist
+
+    - name: Enable repos
+      rhsm_repository:
+        name: "{{ item }}"
+        state: enabled
+      ignore_errors: yes
+      with_items: "{{ lookup('vars', 'enabled_repos') }}"
+
+    - name: Install missing packages
+      yum:
+        name: "{{ package_list }}"
+        state: "present"
+
+#- name: Confirm SELinux profile and settings.
+#  block:
+
+- name: Confirm firewall settings.
+  tags: always, firewall
+  block:
+    - name: Restart Nginx
+      systemd:
+        name: firewalld.service
+        enabled: true
+        state: started
+
+    - name: Enable service ports
+      firewalld:
+        service: "{{ item }}"
+        immediate: true
+        permanent: true
+        state: enabled
+      with_items:
+        - http
+        - https
+        - ssh
+
+    - name: Enable Pulp API port
+      firewalld:
+        port: "{{ pulp_api_port }}/tcp"
+        immediate: true
+        permanent: true
+        state: enabled
+
+- name: Confirm Database configuration.
+  tags: never, install, postgresql
+  block:
+    - name: Initialize database.
+      shell: /bin/postgresql-setup initdb
+      ignore_errors: true
+
+    - name: Start database server.
+      service:
+        name: "{{ postgresql_version }}-postgresql.service"
+        state: started
+
+    - name: Setup pulp account.
+      shell: "sudo -u postgres psql  -c \"CREATE USER pulp WITH PASSWORD '{{ pulp_db_pw }}';\""
+      ignore_errors: true
+
+    - name: Create pulp database.
+      shell: "sudo -u postgres psql  -c \"CREATE DATABASE pulp;\""
+      ignore_errors: true
+
+    - name: Grant pulp user access to pulp database.
+      shell: "sudo -u postgres psql  -c \"GRANT ALL ON DATABASE pulp TO pulp;\""
+
+    - name: Give pulp user ownership to pulp database.
+      shell: "sudo -u postgres psql  -c \"ALTER DATABASE pulp OWNER TO pulp;\""
+
+    - name: Disable transparent huge pages.
+      shell: /sbin/grubby --update-kernel=ALL --args="transparent_hugepage=never"
+      notify:
+        - Enable Services
+        - Reboot
+
+    - name: Deploy configuration file.
+      copy:
+        src: files/pg_hba.conf
+        dest: "/var/opt/rh/{{ postgresql_version }}/lib/pgsql/data/pg_hba.conf"
+        mode: '0600'
+        owner: postgres
+        group: postgres
+        backup: true
+
+    - name: Restart database server.
+      service:
+        name: "{{ postgresql_version }}-postgresql.service"
+        state: restarted
+
+- name: Setup web proxy
+  template:
+    src: templates/repos.conf.j2
+    dest: /etc/opt/rh/rh-nginx18/nginx/conf.d/repo.conf
+  tags: never, install, proxy
+  notify: Restart Nginx
+
+- name: Define service files.
+  tags: always, services
+  block:
+    - name: Create Pulpcore Conent service file.
+      template:
+        backup: true
+        src: templates/pulpcore-content.service.j2
+        dest: /etc/systemd/system/pulpcore-content.service
+      notify: Restart Pulp
+
+    - name: Create Pulpcore Resource Manager service file.
+      template:
+        backup: true
+        src: templates/pulpcore-resource-manager.service.j2
+        dest: /etc/systemd/system/pulpcore-resource-manager.service
+      notify: Restart Pulp
+
+    - name: Create Pulpcore Worker file.
+      template:
+        backup: true
+        src: templates/pulpcore-worker.service.j2
+        dest: /etc/systemd/system/pulpcore-worker@.service
+      notify: Restart Pulp
+
+    - name: Create Pulpcore API service file.
+      template:
+        backup: true
+        src: templates/pulpcore-api.service.j2
+        dest: /etc/systemd/system/pulpcore-api.service
+      notify: Restart Pulp
+
+    - name: Create Pulpcore API socket file.
+      copy:
+        backup: true
+        src: files/pulpcore-api.socket
+        dest: /etc/systemd/system/pulpcore-api.socket
+      notify: Restart Pulp
+
+    - name: Create RH Nginx 18 service file.
+      copy:
+        backup: true
+        src: files/rh-nginx18-nginx.service
+        dest: /usr/lib/systemd/system/rh-nginx18-nginx.service
+      notify: Restart Nginx
+
+- name: Upgrade pip
+  tags: never, install, pip
+  become: true
+  become_user: pulp
+#  shell: /usr/bin/pip3 install --proxy {{ site_proxy }} --upgrade pip --user
+  shell: /usr/bin/pip3 install --upgrade pip --user
+
+- name: Install deb content plugins
+  tags: never, install, pulp-deb
+  become: true
+  become_user: pulp
+#  shell: /usr/bin/pip3 install --proxy {{ site_proxy }} pulp-deb==2.9.2 --user
+  shell: /usr/bin/pip3 install pulp-deb==2.9.2 --user
+
+- name: Migrate Pulp3 database to local database.
+  tags: never, install, migrate
+  become: true
+  become_user: pulp
+  shell: export DJANGO_SETTINGS_MODULE=pulpcore.app.settings && export PULP_SETTINGS={{ pulp_conf_file }} && pulpcore-manager migrate --noinput
+  notify:
+    - Enable Services
+    - Reboot
+
+- name: Set admin password
+  tags: never, install, setup_admin
+  become: True
+  become_user: pulp
+  shell: export DJANGO_SETTINGS_MODULE=pulpcore.app.settings && export PULP_SETTINGS={{ pulp_conf_file }} && pulpcore-manager reset-admin-password --password '{{ pulp_admin_pw }}'
+
+- name: Setup ansible-play management system
+  tags: never, install, ansible_setup
+  block:
+  - name: Create ansible.cfg
+    copy:
+      backup: true
+      src: files/ansible.cfg
+      dest: "{{ ansible_dir }}/ansible.cfg"
+      mode: '0770'
+      owner: pulp
+      group: pulp
+
+  - name: Create inventory file
+    copy:
+      backup: true
+      src: files/hosts
+      dest: "{{ ansible_dir }}/hosts"
+      mode: '0770'
+      owner: pulp
+      group: pulp
+
+  - name: Generate pulp_repos ansible play
+    template:
+      backup: true
+      src: templates/pulp_repos.yml.j2
+      dest: "{{ ansible_dir }}/pulp_repos.yml"
+      mode: '0770'
+      owner: pulp
+      group: pulp
+
+  - name: Define netrc
+    template:
+      src: templates/netrc.j2
+      dest: "{{ install_destination }}/.pulp/netrc"
+      mode: '0770'
+      owner: pulp
+      group: pulp
+
+  - name: Install pulp.squeezer ansible collection
+    become: true
+    become_user: pulp
+    shell: ansible-galaxy collection install pulp.squeezer
+    notify:
+      - Initialize repositories
+
+#  - name: Copy in collection
+#    copy:
+#      backup: true
+#      src: files/pulp-squeezer-0.0.9.tar.gz
+#      dest: "/tmp/pulp-squeezer-0.0.9.tar.gz"
+#      mode: '0770'
+#      owner: pulp
+#      group: pulp
+#
+#  - name: Install collection
+#    become: true
+#    become_user: pulp    
+#    shell: ansible-galaxy collection install /tmp/pulp-squeezer-0.0.9.tar.gz -p /opt/pulp/.ansible/collections
+
+  - name: Finalize template.
+    become: true
+    become_user: pulp
+    shell: sed -i 's/\\{/\{/g;s/\\}/\}/g' "{{ ansible_dir }}/pulp_repos.yml"

@@ -1,0 +1,11 @@
+[Unit]
+Description=Pulp API Server socket
+
+[Socket]
+ListenStream=/run/pulpcore-api.sock
+SocketUser=apache
+SocketMode=0600
+
+[Install]
+WantedBy=sockets.target
+

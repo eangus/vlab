@@ -1,0 +1,7 @@
+---
+- name: Services running and enabled.
+  ansible.builtin.service:
+    name: chronyd
+    state: started
+    enabled: yes
+  tags: services:running:enabled

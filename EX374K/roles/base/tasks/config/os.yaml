@@ -1,0 +1,13 @@
+---
+# set hostname to new fqdn
+- name: Ensure FQDN is set.
+  ansible.builtin.hostname:
+    name: "{{ ansible_facts.hostname + '.' + base_domain }}"
+
+# - name: Setup CDN
+#   ansible.builtin.include_role:
+#     name: rhel-system-roles.rhc
+
+# - name: Setup Ipa client
+#   ansible.builtin.include_role:
+#     name: freeipa.ansible_freeipa.ipaclient
