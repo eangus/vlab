@@ -1,7 +1,0 @@
----
-# tasks file for
-- name: Manage repositories.
-  include: software/repos.yaml
-
-- name: Manage packages.
-  include: software/packages.yaml

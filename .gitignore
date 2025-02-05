@@ -1,6 +1,5 @@
 # vagrant files
-*/.vagrant/*
-*/vagrant/local_config.yaml
-*/ansible-navigator.log
-*/*artifact*.json
-*/.vscode/*
+.vagrant
+*ansible-navigator.log
+*artifact*.json
+.vscode

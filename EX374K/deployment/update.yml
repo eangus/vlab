@@ -1,0 +1,12 @@
+---
+- name: Ensure updates are installed.
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update all packages.
+      ansible.builtin.package:
+        name: '*'
+        state: latest
+        update_only: yes
+        update_cache: yes
+      tags: packages:update

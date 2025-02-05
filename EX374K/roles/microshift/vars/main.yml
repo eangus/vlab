@@ -1,4 +1,0 @@
----
-# vars file for microshift
-microshift_version:
-crio_version: 1.21

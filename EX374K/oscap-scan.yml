@@ -1,5 +1,0 @@
----
-- name: Perform OVAL oscap scan
-  hosts: all
-  roles:
-   - oscap-scan

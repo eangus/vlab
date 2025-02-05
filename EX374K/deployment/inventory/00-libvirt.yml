@@ -1,0 +1,2 @@
+plugin: community.libvirt.libvirt
+uri: 'qemu+ssh://10.1.1.150/system'

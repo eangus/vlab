@@ -1,9 +1,0 @@
----
-# defaults file for vagrant
-vagrant_virt_packages:
-  - 'qemu-kvm'
-  - 'libvirt'
-  - 'libguestfs-tools'
-  - 'virt-install'
-  - 'libvirt-devel'
-  - '@Development Tools'
