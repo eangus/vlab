@@ -1,0 +1,32 @@
+REQUIRED_PLUGINS = %w(vagrant-libvirt ansible vagrant-hostsupdater vagrant-faster)
+exit unless REQUIRED_PLUGINS.all? do |plugin|
+  Vagrant.has_plugin?(plugin) || (
+    puts "The #{plugin} plugin is required. Please install it with:"
+    puts "$ vagrant plugin install #{plugin}"
+    false
+  )
+end
+
+Vagrant.configure("2") do |config|
+  config.vm.synced_folder ".", "/vagrant_data", disabled: true
+#  config.ssh.insert_key = true
+  config.vm.box = "centos/stream9"
+#  config.vm.box = "fedora/41-cloud-base"
+  ["web","lb","db"].each do |deploy|
+    config.vm.define "#{deploy}" do |node|
+      node.vm.hostname = "#{deploy}"
+    end
+  end
+  config.vm.provider "libvirt" do |lv|
+#    lv.random_hostname = true
+#    lv.default_prefix = "lab"
+    lv.storage_pool_name = "personal"
+    lv.driver = "qemu"
+    lv.qemu_use_agent = true
+    lv.channel :type => "unix", :target_type => "virtio", :target_name => "org.qemu.guest_agent.0"
+    lv.memory = 512
+  end
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "vagrant_libvirt_bootstrap.yml"
+  end
+end#
