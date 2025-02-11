@@ -1,7 +1,8 @@
 ---
 # tasks file for oscap-scan
 - name: Initiate Insights upload
-  ansible.builtin.command: "insights-client"
+  ansible.builtin.command:
+    cmd: insights-client
   become: true
   register: insights_output
   changed_when: insights_output.rc != 0
@@ -11,35 +12,46 @@
   ansible.builtin.package:
     name: "{{ oscap_packages }}"
     state: present
+  become: true
 
 - name: Ensure previous oval files are removed
   ansible.builtin.file:
     dest: "{{ oval_dir }}"
     state: absent
     force: true
+  become: true
 
 - name: Ensure directory structure is present
   ansible.builtin.file:
     dest: "{{ oval_dir }}"
     mode: '0755'
     state: directory
+  become: true
 
 - name: Fetch oval archive
   ansible.builtin.get_url:
     url: "https://access.redhat.com/security/data/oval/v2/RHEL{{ ansible_facts['distribution_major_version'] }}/rhel-{{ ansible_facts['distribution_major_version'] }}.oval.xml.bz2"
     dest: "{{ oval_dir }}"
     mode: '0644'
+  become: true
 
 - name: Extract oval
   ansible.builtin.command:
-    cmd: "bzip2 -d rhel-{{ ansible_facts['distribution_major_version'] }}.oval.xml.bz2"
+    cmd: "/usr/bin/bzip2 -d rhel-{{ ansible_facts['distribution_major_version'] }}.oval.xml.bz2"
     chdir: "{{ oval_dir }}"
   register: extract_output
   changed_when: extract_output.rc != 0
   failed_when: extract_output.rc >= 2
+  become: true
 
 - name: Run oscap oval oscap scan
-  ansible.builtin.command: "oscap oval eval --results {{ oval_dir }}results.xml --report {{ oval_dir }}{{ ansible_facts['hostname'] }}-report.html {{ oval_dir }}rhel-{{ ansible_facts['distribution_major_version'] }}.oval.xml"
+  ansible.builtin.shell:
+    cmd: |
+      /usr/bin/oscap oval eval \
+      --results {{ oval_dir }}results.xml \
+      --report {{ oval_dir }}{{ ansible_facts['hostname'] }}-report.html \
+      --oval {{ oval_dir }}rhel-{{ ansible_facts['distribution_major_version'] }}.oval.xml
+  become: true
   register: oscap_scan
   changed_when: oscap_scan.rc != 0
 
@@ -48,13 +60,15 @@
     src: "{{ oval_dir }}{{ ansible_facts['hostname'] }}-report.html"
     dest: "/tmp/"
     flat: true
-    run_once: true
+  delegate_to: localhost
 
 - name: Publish results
   ansible.builtin.copy:
     src: "{{ item }}"
     dest: "/var/www/static/scans/"
     mode: '0644'
+  run_once: true
   become: true
   with_fileglob: "/tmp/*-report.html"
-  when: inventory_hostname == 'bas150'
+  delegate_to: localhost
+  # when: inventory_hostname == 'bas150'
