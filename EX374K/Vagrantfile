@@ -9,13 +9,14 @@ end
 
 nodes = [
   {:name => "lb001", :ip => "192.168.121.10"},
-  {:name => "db001", :ip => "192.168.121.20"},
+  # {:name => "db001", :ip => "192.168.121.20"},
   {:name => "wb001", :ip => "192.168.121.30"}
 ]
 
 Vagrant.configure("2") do |config|
   config.vm.synced_folder ".", "/vagrant_data", disabled: true
   config.vm.box = "centos/stream9"
+  config.ssh.insert_key = false
   nodes.each do |node|
     config.vm.define node[:name] do |deploy|
       deploy.vm.hostname = node[:name]

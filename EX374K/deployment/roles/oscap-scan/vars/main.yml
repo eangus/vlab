@@ -4,3 +4,4 @@ oval_dir: /var/oval/
 oscap_packages:
   - openscap-scanner
   - openscap-utils
+base_uri: "https://access.redhat.com/security/data/oval/v2"

@@ -30,7 +30,7 @@
 
 - name: Fetch oval archive
   ansible.builtin.get_url:
-    url: "https://access.redhat.com/security/data/oval/v2/RHEL{{ ansible_facts['distribution_major_version'] }}/rhel-{{ ansible_facts['distribution_major_version'] }}.oval.xml.bz2"
+    url: "{{ base_uri }}/RHEL{{ ansible_facts['distribution_major_version'] }}/rhel-{{ ansible_facts['distribution_major_version'] }}.oval.xml.bz2"
     dest: "{{ oval_dir }}"
     mode: '0644'
   become: true

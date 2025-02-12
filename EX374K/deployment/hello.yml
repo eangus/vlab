@@ -1,0 +1,14 @@
+---
+- name: Hello
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Gather minimal facts
+      ansible.builtin.setup:
+        gather_subset:
+          - '!all'
+          - 'min'
+
+    - name: Hello
+      ansible.builtin.debug:
+        msg: "Hello, im {{ ansible_facts['nodename'] }}"

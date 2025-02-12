@@ -6,6 +6,9 @@ ansible-navigator:
     image: registry.redhat.io/ansible-automation-platform-24/ee-supported-rhel8:latest
     pull:
       policy: missing
+    environment-variables:
+      set:
+        ANSIBLE_PIPELINING: true
   logging:
     append: true
     file: 'ansible-navigator.log'
