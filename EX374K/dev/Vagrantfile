@@ -1,0 +1,69 @@
+# REQUIRED_PLUGINS = %w(vagrant-libvirt ansible vagrant-hostsupdater vagrant-faster)
+# exit unless REQUIRED_PLUGINS.all? do |plugin|
+#   Vagrant.has_plugin?(plugin) || (
+#     puts "The #{plugin} plugin is required. Please install it with:"
+#     puts "$ vagrant plugin install #{plugin}"
+#     false
+#   )
+# end
+
+# nodes = [
+#   {:name => "lb001", :ip => "192.168.121.10"},
+#   # {:name => "db001", :ip => "192.168.121.20"},
+#   {:name => "wb001", :ip => "192.168.121.30"}
+# ]
+
+# Vagrant.configure("2") do |config|
+#   config.vm.synced_folder ".", "/vagrant", disabled: true
+#   # config.vm.box = "centos/stream9"
+#   config.vm.box = "isc/lxc-fedora-37"
+#   config.ssh.insert_key = false
+#   nodes.each do |node|
+#     config.vm.define node[:name] do |deploy|
+#       deploy.vm.hostname = node[:name]
+#       deploy.vm.network :private_network, :ip => node[:ip]
+#     end
+#   end
+#   config.vm.provider "libvirt" do |lv|
+# #    lv.random_hostname = true
+# #    lv.default_prefix = "lab"
+#     lv.storage_pool_name = "personal"
+#     lv.driver = "qemu"
+#     lv.qemu_use_agent = true
+#     lv.channel :type => "unix", :target_type => "virtio", :target_name => "org.qemu.guest_agent.0"
+#     lv.cpus = 2
+#     lv.memory = 1024
+#   end
+#   config.vm.provision "shell" do |s|
+#     ssh_pub = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
+#     s.inline = <<-SHELL
+#       dnf install -y qemu-guest-agent --refresh
+#       mkdir -p /home/vagrant/.ssh
+#       echo #{ssh_pub} >> /home/vagrant/.ssh/authorized_keys
+#       chown -R vagrant /home/vagrant
+#       chown -R vagrant /home/vagrant/.ssh/authorized_keys
+#       chmod 600 /home/vagrant/.ssh/authorized_keys
+#     SHELL
+#   end
+#   # config.vm.provision "ansible" do |ansible|
+#   #   ansible.playbook = "vagrant_libvirt_bootstrap.yml"
+#   # end
+# end
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "isc/lxc-fedora-37"
+  config.vm.provider :lxc do |lxc|
+    # Same effect as 'customize ["modifyvm", :id, "--memory", "1024"]' for VirtualBox
+    lxc.customize 'cgroup.memory.limit_in_bytes', '1024M'
+  end
+  config.vm.provision "shell" do |s|
+    ssh_pub = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
+    s.inline = <<-SHELL
+      mkdir -p /home/vagrant/.ssh
+      echo #{ssh_pub} >> /home/vagrant/.ssh/authorized_keys
+      chown -R vagrant /home/vagrant
+      chown -R vagrant /home/vagrant/.ssh/authorized_keys
+      chmod 600 /home/vagrant/.ssh/authorized_keys
+    SHELL
+  end
+end

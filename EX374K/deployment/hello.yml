@@ -7,7 +7,8 @@
       ansible.builtin.setup:
         gather_subset:
           - '!all'
-          - 'min'
+          - '!min'
+          - 'machine'
 
     - name: Hello
       ansible.builtin.debug:
