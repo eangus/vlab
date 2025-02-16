@@ -11,10 +11,10 @@ ansible-navigator:
         ANSIBLE_PIPELINING: true
   logging:
     append: true
-    file: 'ansible-navigator.log'
+    file: './logs/ansible-navigator.log'
     level: warning
   mode: stdout
   playbook-artifact:
-    enable: false
-    save-as: '{playbook_dir}/{playbook_name}-artifact-{time_stamp}.json'
+    enable: true
+    save-as: './logs/{playbook_name}-artifact-{time_stamp}.json'
   time-zone: UTC
