@@ -1,4 +1,5 @@
 # vagrant files
+ansible_collections
 .vagrant
 *ansible-navigator.log
 *artifact*.json
