@@ -8,14 +8,15 @@ exit unless REQUIRED_PLUGINS.all? do |plugin|
 end
 
 nodes = [
-  {:name => "lb001", :ip => "192.168.121.10"},
-  # {:name => "db001", :ip => "192.168.121.20"},
-  {:name => "wb001", :ip => "192.168.121.30"}
+  {:name => "lb1", :ip => "192.168.121.10"},
+  {:name => "wb1", :ip => "192.168.121.20"},
+  {:name => "db1", :ip => "192.168.121.30"}
 ]
 
 Vagrant.configure("2") do |config|
-  config.vm.synced_folder ".", "/vagrant_data", disabled: true
+  config.vm.synced_folder ".", "/vagrant", disabled: true
   config.vm.box = "centos/stream9"
+  # config.vm.box = "fedora/41-cloud-base"
   config.ssh.insert_key = false
   nodes.each do |node|
     config.vm.define node[:name] do |deploy|
@@ -31,7 +32,7 @@ Vagrant.configure("2") do |config|
     lv.qemu_use_agent = true
     lv.channel :type => "unix", :target_type => "virtio", :target_name => "org.qemu.guest_agent.0"
     lv.cpus = 2
-    lv.memory = 1024
+    lv.memory = 2048
   end
   config.vm.provision "shell" do |s|
     ssh_pub = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
@@ -41,6 +42,8 @@ Vagrant.configure("2") do |config|
       chown -R vagrant /home/vagrant
       chown -R vagrant /home/vagrant/.ssh/authorized_keys
       chmod 600 /home/vagrant/.ssh/authorized_keys
+      echo 'fastestmirror=1' >> /etc/dnf/dnf.conf
+      echo 'max_parallel_downloads=10' >> /etc/dnf/dnf.conf
     SHELL
   end
   # config.vm.provision "ansible" do |ansible|

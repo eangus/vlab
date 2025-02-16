@@ -1,0 +1,6 @@
+---
+vagrant_plugins:
+ - name: vagrant-libvirt
+ - name: ansible
+ - name: vagrant-faster
+ - name: vagrant-hostsupdater
