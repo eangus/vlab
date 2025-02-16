@@ -4,11 +4,46 @@
   become: true
   gather_facts: false
   tasks:
+    - name: Gather subset facts
+      ansible.builtin.setup:
+        gather_subset:
+          - '!all'
+          - '!min'
+          - 'pkg_mgr'
+          - 'service_mgr'
+
+    - name: Ensure SELinux is disabled
+      ansible.posix.selinux:
+        state: disabled
+
     - name: Ensure Apache HTTP Server is installed
       ansible.builtin.package:
         name:
           - httpd
         state: present
+
+    - name: Ensure web content directory is present
+      ansible.builtin.file:
+        path: /var/www/web
+        state: directory
+        mode: '0755'
+        owner: apache
+        group: apache
+
+    - name: Ensure web content is present
+      ansible.builtin.shell:
+        cmd: echo "Hello! I'm {{ ansible_facts['nodename'] }}. This is a web server managed by Ansible!" > /var/www/web/index.html
+      changed_when: false
+      become: true
+      notify:
+        - Restart HTTPD
+
+    - name: Ensure web content has the correct permissions
+      ansible.builtin.file:
+        path: /var/www/web/index.html
+        mode: '0644'
+        owner: apache
+        group: apache
 
     - name: Ensure proper configuration of the Apache HTTP Server
       ansible.builtin.lineinfile:
@@ -16,6 +51,7 @@
         regexp: "{{ item.regexp }}"
         line: "{{ item.line }}"
         state: present
+        # validate: /usr/sbin/httpd -t
       loop:
         - regexp: '^Listen 80$'
           line: 'Listen 8181'
@@ -25,3 +61,45 @@
           line: 'DocumentRoot "/var/www/web"'
         - regexp: '^<Directory "/var/www/html">'
           line: '<Directory "/var/www/web">'
+      notify:
+        - Restart HTTPD
+
+    - name: Ensure Apache HTTP Server is running and enabled
+      ansible.builtin.service:
+        name: httpd
+        state: started
+        enabled: true
+
+    - name: Ensure Firewalld Service is running and enabled
+      ansible.builtin.service:
+        name: firewalld
+        state: started
+        enabled: true
+
+    - name: Ensure custom HTTP traffic is perimmitted in the default zone of firewalld
+      ansible.posix.firewalld:
+        port: "8181/tcp"
+        state: enabled
+        permanent: true
+        immediate: true
+      tags: firewall
+      notify:
+        - Restart Firewalld
+        - Verify web content
+
+  handlers:
+    - name: Restart HTTPD
+      ansible.builtin.service:
+        name: httpd
+        state: restarted
+
+    - name: Restart Firewalld
+      ansible.builtin.service:
+        name: firewalld
+        state: restarted
+
+    - name: Verify web content
+      ansible.builtin.uri:
+        url: http://{{ ansible_facts['nodename'] }}:8181
+        status_code: [200]
+      listen: Restart HTTPD
