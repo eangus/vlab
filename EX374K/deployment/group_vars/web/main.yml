@@ -1,0 +1,3 @@
+web_custom_port: !!int 8181
+web_custom_directory: !!str /var/www/web
+web_firewall_port: !!str 8181/tcp

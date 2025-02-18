@@ -24,7 +24,7 @@
 
     - name: Ensure web content directory is present
       ansible.builtin.file:
-        path: /var/www/web
+        path: "{{ web_custom_directory }}"
         state: directory
         mode: '0755'
         owner: apache
@@ -54,13 +54,13 @@
         # validate: /usr/sbin/httpd -t
       loop:
         - regexp: '^Listen 80$'
-          line: 'Listen 8181'
+          line: 'Listen {{ web_custom_port }}'
         - regexp: '^ServerAdmin root@localhost'
           line: 'ServerAdmin support@example.com'
         - regexp: '^DocumentRoot "/var/www/html"'
           line: 'DocumentRoot "/var/www/web"'
         - regexp: '^<Directory "/var/www/html">'
-          line: '<Directory "/var/www/web">'
+          line: '<Directory "{{ web_custom_directory }}">'
       notify:
         - Restart HTTPD
 
@@ -78,7 +78,7 @@
 
     - name: Ensure custom HTTP traffic is perimmitted in the default zone of firewalld
       ansible.posix.firewalld:
-        port: "8181/tcp"
+        port: "{{ web_firewall_port }}"
         state: enabled
         permanent: true
         immediate: true
@@ -100,6 +100,6 @@
 
     - name: Verify web content
       ansible.builtin.uri:
-        url: http://{{ ansible_facts['nodename'] }}:8181
+        url: http://{{ ansible_facts['nodename'] }}:{{ web_custom_port }}
         status_code: [200]
       listen: Restart HTTPD
