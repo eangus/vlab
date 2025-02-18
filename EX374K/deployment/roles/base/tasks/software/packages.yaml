@@ -3,7 +3,7 @@
   ansible.builtin.package:
     name: '{{ base_yum_base_list }}'
     state: present
-    update_cache: yes
+    update_cache: true
   tags: packages:base
 
 - name: Redlist packages removed.
@@ -22,6 +22,6 @@
   ansible.builtin.package:
     name: '*'
     state: latest
-    update_only: yes
-    update_cache: yes
+    update_only: true
+    update_cache: true
   tags: packages:update
