@@ -1,0 +1,6 @@
+@all:
+  |--@ungrouped:
+  |--@db:
+  |  |--database-server-a
+  |--@web:
+  |  |--web-server-a

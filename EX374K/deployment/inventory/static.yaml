@@ -1,0 +1,10 @@
+all:
+  children:
+    db:
+      hosts:
+        database-server-a:
+          ansible_ssh_host: db1
+    web:
+      hosts:
+        web-server-a:
+          ansible_ssh_host: wb1

@@ -15,35 +15,35 @@ effective Ansible automation solutions.
 Chapter 2, Managing Content Collections and Execution Environments
 Run playbooks that use content collections not included in ansible-core, either from an existing execution environment or by downloading them from automation hub.
 
-- [ ] Describe how Ansible Content Collections are used to distribute modules and plug-ins, and
+- [x] Describe how Ansible Content Collections are used to distribute modules and plug-ins, and
 create plays that use content from them.
 
-- [ ] Search automation hub for Ansible Content Collections, and install them from the command line
+- [x] Search automation hub for Ansible Content Collections, and install them from the command line
 by name or by using a requirements.yml file.
 
-- [ ] Identify the automation execution environments provided by Red Hat and select the correct one
+- [x] Identify the automation execution environments provided by Red Hat and select the correct one
 for your use case.
 
 Chapter 3, Running Playbooks with Automation Controller
 Explain what automation controller is and demonstrate how to use it to run playbooks that you developed with automation content navigator.
 
-- [ ] Describe the architecture and use cases of the automation controller component of Red Hat Ansible Automation Platform.
+- [x] Describe the architecture and use cases of the automation controller component of Red Hat Ansible Automation Platform.
 
-- [ ] Navigate and describe the automation controller web UI, and successfully launch a job using a job template, project, credential, and inventory.
+- [x] Navigate and describe the automation controller web UI, and successfully launch a job using a job template, project, credential, and inventory.
 
 Chapter 4, Working with Ansible Configuration Settings
 Examine and adjust the configuration of Ansible and automation content navigator to simplify development and to troubleshoot issues.
 
-- [ ] Browse the current Ansible configuration by using automation content navigator.
+- [x] Browse the current Ansible configuration by using automation content navigator.
 
-- [ ] Change configuration settings for automation content navigator with its configuration file, and determine where the configuration file is located.
+- [x] Change configuration settings for automation content navigator with its configuration file, and determine where the configuration file is located.
 
 Chapter 5, Managing Inventories
 Manage inventories by using advanced features of Ansible.
 
-- [ ] Describe what dynamic inventories are, and install and use an existing script or plug-in as an Ansible dynamic inventory source.
+- [x] Describe what dynamic inventories are, and install and use an existing script or plug-in as an Ansible dynamic inventory source.
 
-- [ ] Write static inventory files in YAML format.
+- [x] Write static inventory files in YAML format.
 
 - [ ] Structure host and group variables by using multiple files per host or group, and use special variables to override the host, port, or remote user that Ansible uses for a specific host.
 
