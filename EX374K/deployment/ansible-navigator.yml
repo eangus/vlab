@@ -18,3 +18,6 @@ ansible-navigator:
     enable: true
     save-as: './logs/{playbook_name}-artifact-{time_stamp}.json'
   time-zone: UTC
+  editor:
+    command: code {filename}
+    console: false

@@ -85,7 +85,7 @@
       tags: firewall
       notify:
         - Restart Firewalld
-        - Verify web content
+        - Restart HTTPD
 
   handlers:
     - name: Restart HTTPD
@@ -102,4 +102,5 @@
       ansible.builtin.uri:
         url: http://{{ ansible_facts['nodename'] }}:{{ web_custom_port }}
         status_code: [200]
+        return_content: true
       listen: Restart HTTPD
