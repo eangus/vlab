@@ -9,6 +9,7 @@ ansible-navigator:
     environment-variables:
       set:
         ANSIBLE_PIPELINING: true
+        CGROUP_CONTROLLER_GROUP: 'cpu'
   logging:
     append: true
     file: './logs/ansible-navigator.log'

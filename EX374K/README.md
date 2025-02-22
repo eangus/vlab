@@ -50,11 +50,11 @@ Manage inventories by using advanced features of Ansible.
 Chapter 6, Managing Task Execution
 Control and optimize the execution of tasks by Ansible Playbooks.
 
-- [ ] Control automatic privilege escalation at the play, role, task, or block level.
+- [x] Control automatic privilege escalation at the play, role, task, or block level.
 
 - [ ] Configure tasks that can run before roles or after normal handlers, and simultaneously notify multiple handlers.
 
-- [ ] Label tasks with tags, and run only tasks labeled with specific tags, or start playbook execution at a specific task.
+- [x] Label tasks with tags, and run only tasks labeled with specific tags, or start playbook execution at a specific task.
 
 - [ ] Optimize your playbook to run more efficiently, and use callback plug-ins to profile and analyze which tasks consume the most time.
 
