@@ -7,9 +7,9 @@ help with Ansible automation development.
 - [x] Install automation content navigator and use it to run an existing playbook with a supported
 execution environment.
 
-- [ ] Create and manage Ansible Playbooks in a Git repository, following recommended practices.
+- [x] Create and manage Ansible Playbooks in a Git repository, following recommended practices.
 
-- [ ] Demonstrate and describe common recommended practices for developing and maintaining
+- [x] Demonstrate and describe common recommended practices for developing and maintaining
 effective Ansible automation solutions.
 
 Chapter 2, Managing Content Collections and Execution Environments
@@ -45,7 +45,7 @@ Manage inventories by using advanced features of Ansible.
 
 - [x] Write static inventory files in YAML format.
 
-- [ ] Structure host and group variables by using multiple files per host or group, and use special variables to override the host, port, or remote user that Ansible uses for a specific host.
+- [x] Structure host and group variables by using multiple files per host or group, and use special variables to override the host, port, or remote user that Ansible uses for a specific host.
 
 Chapter 6, Managing Task Execution
 Control and optimize the execution of tasks by Ansible Playbooks.
@@ -76,16 +76,16 @@ Use advanced features of Ansible to manage rolling updates in order to minimize 
 
 - [ ] Tune the number of simultaneous connections that Ansible opens to managed hosts, and how Ansible processes groups of managed hosts through the play's tasks.
 
-- [ ] Tune the behavior of the serial directive when batching hosts for execution, abort the play if it fails for too many hosts, and create tasks that run  nly once for each batch or for all hosts in the inventory.
+- [ ] Tune the behavior of the serial directive when batching hosts for execution, abort the play if it fails for too many hosts, and create tasks that run only once for each batch or for all hosts in the inventory.
 
 Chapter 9, Creating Content Collections and Execution Environments
 Write your own Ansible Content Collections, publish them, embed them in a custom automation
 execution environment, and run them in playbooks by using automation controller.
 
-- [ ] Create content collections and distribute them for reuse.
+- [x] Create content collections and distribute them for reuse.
 
-- [ ] Build a custom automation execution environment image by using the ansible-builder command.
+- [x] Build a custom automation execution environment image by using the ansible-builder command.
 
-- [ ] Validate that a custom automation execution environment works as expected by testing it with the ansible-navigator command, and then distribute the automation execution environment for reuse.
+- [x] Validate that a custom automation execution environment works as expected by testing it with the ansible-navigator command, and then distribute the automation execution environment for reuse.
 
-- [ ] Run a playbook in automation controller that uses a content collection in the project or content provided by a specific automation execution environment.
+- [x] Run a playbook in automation controller that uses a content collection in the project or content provided by a specific automation execution environment.
