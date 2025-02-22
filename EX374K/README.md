@@ -52,11 +52,11 @@ Control and optimize the execution of tasks by Ansible Playbooks.
 
 - [x] Control automatic privilege escalation at the play, role, task, or block level.
 
-- [ ] Configure tasks that can run before roles or after normal handlers, and simultaneously notify multiple handlers.
+- [x] Configure tasks that can run before roles or after normal handlers, and simultaneously notify multiple handlers.
 
 - [x] Label tasks with tags, and run only tasks labeled with specific tags, or start playbook execution at a specific task.
 
-- [ ] Optimize your playbook to run more efficiently, and use callback plug-ins to profile and analyze which tasks consume the most time.
+- [x] Optimize your playbook to run more efficiently, and use callback plug-ins to profile and analyze which tasks consume the most time.
 
 Chapter 7, Transforming Data with Filters and Plug-ins
 Populate, manipulate, and manage data in variables using filters and plug-ins.
