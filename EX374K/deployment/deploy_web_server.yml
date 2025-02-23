@@ -1,6 +1,8 @@
 ---
 - name: Configure the Apache HTTP Server
   hosts: web
+  # strategy: free
+  serial: 1
   gather_facts: false
   tasks:
     - name: Gather subset facts
@@ -10,12 +12,14 @@
           - '!min'
           - 'pkg_mgr'
           - 'service_mgr'
+          - 'network'
       tags:
         - always
         - install
         - setup
 
     - name: Ensure SELinux is disabled
+      become: true
       ansible.posix.selinux:
         state: disabled
       tags:
@@ -23,6 +27,7 @@
         - setup
 
     - name: Ensure Apache HTTP Server is installed
+      become: true
       ansible.builtin.package:
         name:
           - httpd
@@ -32,6 +37,7 @@
         - setup
 
     - name: Ensure web content directory is present
+      become: true
       ansible.builtin.file:
         path: "{{ web_custom_directory }}"
         state: directory
@@ -43,14 +49,14 @@
         - content
 
     - name: Ensure web content is present using copy
+      become: true
       ansible.builtin.copy:
         dest: /var/www/web/index.html
-        content: echo "Hello! I'm {{ ansible_facts['nodename'] }}. This is a web server managed by Ansible!"
+        content: "Hello! I'm {{ ansible_facts['nodename'] }}. This is a web server managed by Ansible! You can reach me at either {{ ansible_facts['fqdn'] }} or {{ ansible_facts['default_ipv4']['address'] }}"
         mode: '0644'
         owner: apache
         group: apache
       changed_when: false
-      become: true
       tags:
         - setup
         - content
@@ -58,11 +64,16 @@
         - Restart HTTPD
 
     - name: Ensure proper configuration of the Apache HTTP Server
+      become: true
       ansible.builtin.lineinfile:
         dest: /etc/httpd/conf/httpd.conf
         regexp: "{{ item.regexp }}"
         line: "{{ item.line }}"
         state: present
+        backup: true
+        mode: '0644'
+        owner: apache
+        group: apache
         # validate: /usr/sbin/httpd -t
       loop:
         - regexp: '^Listen 80$'
@@ -76,11 +87,12 @@
       tags:
         - setup
         - config
-        - content
+        # - content
       notify:
         - cycle_web
 
     - name: Ensure Apache HTTP Server is running and enabled
+      become: true
       ansible.builtin.service:
         name: httpd
         state: started
@@ -90,6 +102,7 @@
         - setup
 
     - name: Ensure Firewalld Service is running and enabled
+      become: true
       ansible.builtin.service:
         name: firewalld
         state: started
@@ -99,6 +112,7 @@
         - setup
 
     - name: Ensure custom HTTP traffic is perimmitted in the default zone of firewalld
+      become: true
       ansible.posix.firewalld:
         port: "{{ web_firewall_port }}"
         state: enabled
@@ -111,21 +125,41 @@
         - Restart Firewalld
         - cycle_web
 
+    - name: Flush handlers
+      ansible.builtin.meta: flush_handlers
+      tags:
+        - always
+
+    - name: Verify web content
+      delegate_to: localhost
+      ansible.builtin.uri:
+        url: http://{{ ansible_facts['nodename'] }}:{{ web_custom_port }}
+        status_code: [200]
+        return_content: true
+      register: smoke_test
+      until: "'Hello' in smoke_test['content']"
+      retries: 10
+      delay: 5
+      tags:
+        - always
+        - smoke
+
+    - name: debug
+      ansible.builtin.debug:
+        var: smoke_test
+      tags:
+        - always
+
   handlers:
     - name: Restart HTTPD
+      become: true
       ansible.builtin.service:
         name: httpd
         state: restarted
       listen: cycle_web
 
     - name: Restart Firewalld
+      become: true
       ansible.builtin.service:
         name: firewalld
         state: restarted
-
-    - name: Verify web content
-      ansible.builtin.uri:
-        url: http://{{ ansible_facts['nodename'] }}:{{ web_custom_port }}
-        status_code: [200]
-        return_content: true
-      listen: cycle_web

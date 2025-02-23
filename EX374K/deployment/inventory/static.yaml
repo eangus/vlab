@@ -8,6 +8,8 @@ all:
       hosts:
         web-server-a:
           ansible_ssh_host: wb1
-      vars:
-        ansible_become: true
-        ansible_user: vagrant
+        web-server-b:
+          ansible_ssh_host: wb2
+      # vars:
+      #   # ansible_become: true
+      #   ansible_user: vagrant
