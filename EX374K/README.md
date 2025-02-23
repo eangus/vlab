@@ -18,6 +18,8 @@ ansible-collection-ansible-posix
 ~/ansible-navigator.yml
 ./ansible-navigator.yml
 /usr/share/ansible/collections/ansible_collections/
+mynamespace/mycollection/meta/runtime.yml #set requires_ansible: '>=2.9.10'
+
 ```
 
 ## COMMANDS
@@ -44,10 +46,12 @@ ansible-builder build --tag ee-libvirt-test:v1.0
 ansible-builder build -t ansible-core-libvirt -v 3
 ansible-builder introspect
 ansible-builder introspect --sanitize --user-pip=files/requirements.txt --user-bindep=files/bindep.txt 2>&1 | tee ansible-builder.log
-ansible-galaxy collection init lab.utils
+ansible-galaxy collection init mynamespace.mycollection
 ansible-galaxy collection install -p ./collections/ community.libvirt
 ansible-galaxy collection install -p ./collections/ community.libvirt --force
 ansible-galaxy collection install -r ./collections/requirements.yml
+ansible-galaxy collection build
+ansible-galaxy role init myrole
 ```
 
 ## REMEMBER

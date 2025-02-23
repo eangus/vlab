@@ -1,0 +1,86 @@
+---
+- name: Demo filters and uses
+  hosts: localhost
+  gather_facts: false
+  vars:
+    users:
+      - name: paul
+        password: supersecret
+        authorized:
+          - keys/paul_key1.pub
+          - keys/paul_key2.pub
+        mysql:
+          hosts:
+            - "%"
+            - "127.0.0.1"
+            - "::1"
+            - "localhost"
+        groups:
+          - wheel
+      - name: john
+        password: minessecrettoo
+        authorized:
+          - keys/john_key.pub
+        mysql:
+          password: other-mysql-password
+          hosts:
+            - "utility"
+        groups:
+          - wheel
+          - devops
+  tasks:
+    - name: 1) Display structured data
+      ansible.builtin.debug:
+        msg: "{{ users }}"
+      tags:
+        - structure
+
+    - name: 2) Display flattened structured data with flatten filter
+      ansible.builtin.debug:
+        msg: "{{ users | flatten }}"
+      tags:
+        - flatten
+
+    - name: 3) Display mapped structured data with map filter
+      ansible.builtin.debug:
+        msg: "{{ users | map(attribute='mysql') | flatten }}"
+      tags:
+        - map
+
+    - name: 4) Display subelement structured data with subelement filter
+      ansible.builtin.debug:
+        msg: " User {{ item[0]['name'] }} has a public key at {{ item[1] }}"
+      loop: "{{ users | subelements('authorized') }}"
+      tags:
+        - subelement
+
+    - name: 5) Display structured data in JSON format with to_json filter
+      ansible.builtin.debug:
+        msg: "{{ users | to_json }}"
+      tags:
+        - json
+
+    - name: 6) Display structured data with dict2items filter
+      ansible.builtin.debug:
+        msg: "{{ users | dict2items }}"
+      tags:
+        - dict2items
+
+    - name: 7) Display b64encoded data with b64encode filter
+      ansible.builtin.debug:
+        msg: "{{ 'some secret data' | b64encode }}"
+      tags:
+        - b64encode
+
+    - name: 8) Display b64decoded data with b64decode filter
+      ansible.builtin.debug:
+        msg: "{{ 'c29tZSBzZWNyZXQgZGF0YQ==' | b64decode }}"
+      tags:
+        - b64decode
+
+    - name: 9) Display password hashed data with password_hash filter
+      ansible.builtin.debug:
+        msg: "{{ 'supersecret' | password_hash('sha512') }}"
+      tags:
+        - password_hash
+
