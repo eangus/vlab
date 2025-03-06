@@ -1,5 +1,11 @@
 # REVIEW MATERIAL
 
+## VIMRC
+
+```vim
+set ts=2 sw=2 sts=2 cuc cul mouse=n smartindent smarttab
+```
+
 ## PACKAGES
 
 ```
