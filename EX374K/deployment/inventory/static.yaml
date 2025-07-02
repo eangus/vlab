@@ -3,13 +3,13 @@ all:
     db:
       hosts:
         database-server-a:
-          ansible_ssh_host: db1
+          ansible_ssh_host: db01
     web:
       hosts:
         web-server-a:
-          ansible_ssh_host: wb1
+          ansible_ssh_host: wb01
         web-server-b:
-          ansible_ssh_host: wb2
+          ansible_ssh_host: wb02
       # vars:
       #   # ansible_become: true
       #   ansible_user: vagrant

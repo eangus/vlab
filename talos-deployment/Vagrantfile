@@ -7,84 +7,56 @@ exit unless REQUIRED_PLUGINS.all? do |plugin|
   )
 end
 
-# nodes = [
-#   {:name => "kcn1", :cpus => 2, :memory => 2048, storage: "4G"},
-#   {:name => "kwn1", :cpus => 2, :memory => 2048, storage: "100G"}
-# ]
-
-# Vagrant.configure("2") do |config|
-#   config.vm.synced_folder ".", "/vagrant", disabled: true
-#   # config.vm.box = "centos/stream9"
-#   # config.vm.box = "fedora/41-cloud-base"
-#   # config.ssh.insert_key = false
-#   nodes.each do |node|
-#     config.vm.define "#{node[:name]}" do |deploy|
-#       config.vm.provider :libvirt do |domain|
-#         config.vm.network :public_network, :dev => "br0", :auto_config => false
-#         domain.default_prefix = "lab-"
-#         domain.driver = "qemu"
-#         domain.host = "10.1.1.200"
-#         domain.connect_via_ssh = true
-#         domain.cpus = "#{node[:cpus]}"
-#         domain.memory = "#{node[:memory]}"
-#         # domain.serial :type => "file", :source => {:path => "/tmpkcn1.log"}
-#         domain.storage :file, :device => :cdrom, :path => "/var/lib/libvirt/storage/software/talos-metal-amd64.iso", :readonly => true
-#         domain.storage :file, :size => "#{node[:storage]}", :type => "raw"
-#         domain.boot 'hd'
-#         domain.boot 'cdrom'
-#       end
-#     end
-#   end
-# end
+nodes = [
+  {:name => "kcn1", :cpus => 2, :memory => 2048, storage: "4G"},
+  {:name => "kwn1", :cpus => 2, :memory => 2048, storage: "100G"}
+]
 
 Vagrant.configure("2") do |config|
   config.vm.synced_folder ".", "/vagrant", disabled: true
-  config.vm.define "kcn1" do |deploy|
-    config.vm.provider :libvirt do |domain|
-      config.vm.network :public_network, :dev => "br0", :auto_config => false
-      domain.default_prefix = "lab-"
-      domain.driver = "qemu"
-      domain.host = "10.1.1.200"
-      domain.connect_via_ssh = true
-      domain.cpus = 2
-      domain.memory = 2048
-      # domain.serial :type => "file", :source => {:path => "/tmp/kcn1.log"}
-      domain.storage :file, :device => :cdrom, :path => "/var/lib/libvirt/storage/software/talos-metal-amd64.iso", :readonly => true
-      domain.storage :file, :size => "10G", :type => "raw"
-      domain.boot 'hd'
-      domain.boot 'cdrom'
-    end
-  end
-  config.vm.define "kcn2" do |deploy|
-    config.vm.provider :libvirt do |domain|
-      config.vm.network :public_network, :dev => "br0", :auto_config => false
-      domain.default_prefix = "lab-"
-      domain.driver = "qemu"
-      domain.host = "10.1.1.200"
-      domain.connect_via_ssh = true
-      domain.cpus = 2
-      domain.memory = 2048
-      # domain.serial :type => "file", :source => {:path => "/tmp/kcn2.log"}
-      domain.storage :file, :device => :cdrom, :path => "/var/lib/libvirt/storage/software/talos-metal-amd64.iso", :readonly => true
-      domain.storage :file, :size => "10G", :type => "raw"
-      domain.boot 'hd'
-      domain.boot 'cdrom'
-    end
-  end
-  config.vm.define "kwn1" do |deploy|
-    config.vm.provider :libvirt do |domain|
-      config.vm.network :public_network, :dev => "br0", :auto_config => false
-      domain.default_prefix = "lab-"
-      domain.driver = "qemu"
-      domain.host = "10.1.1.200"
-      domain.connect_via_ssh = true
-      domain.cpus = 4
-      domain.memory = 4096
-      # domain.serial :type => "file", :source => {:path => "/tmp/kwn1.log"}
-      domain.storage :file, :device => :cdrom, :path => "/var/lib/libvirt/storage/software/talos-metal-amd64.iso", :readonly => true
-      domain.storage :file, :size => "100G", :type => "raw"
-      domain.boot 'hd'
-      domain.boot 'cdrom'
+  # config.vm.box = "centos/stream9"
+  # config.vm.box = "fedora/41-cloud-base"
+  # config.ssh.insert_key = false
+  nodes.each do |node|
+    config.vm.define "#{node[:name]}" do |deploy|
+      deploy.vm.provider :libvirt do |domain|
+        domain.host = "10.1.1.200"
+        domain.connect_via_ssh = true
+        domain.default_prefix = "lab-"
+        domain.driver = "qemu"
+        domain.vm.network :public_network, :dev => "br0", :auto_config => false
+        domain.cpus = "#{node[:cpus]}"
+        domain.memory = "#{node[:memory]}"
+        # domain.serial :type => "file", :source => {:path => "/tmpkcn1.log"}
+        domain.storage :file, :device => :cdrom, :path => "/var/lib/libvirt/storage/software/talos-metal-amd64.iso", :readonly => true
+        domain.storage :file, :size => "#{node[:storage]}", :type => "raw"
+        domain.boot 'hd'
+        domain.boot 'cdrom'
+      end
     end
   end
 end
+
+# Vagrant.configure("2") do |config|
+#   config.vm.synced_folder ".", "/vagrant", disabled: true
+#   config.vm.define :kcn1 do |kcn1|
+#     kcn1.vm.network :public_network,
+#       :dev => "br0",
+#       :mode => "bridge",
+#       :type => "bridge"
+#     kcn1.vm.provider :libvirt do |domain|
+#       domain.qemu_use_session = true
+#       domain.uri = "qemu+ssh://10.1.1.200/system"
+#       domain.management_network_device = "br0"
+#       domain.default_prefix = "lab-"
+#       domain.driver = "qemu"
+#       domain.cpus = 2
+#       domain.memory = 2048
+#       # domain.serial :type => "file", :source => {:path => "/tmp/kcn1.log"}
+#       domain.storage :file, :device => :cdrom, :path => "/var/lib/libvirt/storage/software/talos-metal-amd64.iso", :readonly => true
+#       domain.storage :file, :size => "10G", :type => "qcow2"
+#       domain.boot 'hd'
+#       domain.boot 'cdrom'
+#     end
+#   end
+# end

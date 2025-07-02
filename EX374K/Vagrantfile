@@ -8,9 +8,9 @@ exit unless REQUIRED_PLUGINS.all? do |plugin|
 end
 
 nodes = [
-  # {:name => "lb1", :ip => "192.168.121.10"},
-  {:name => "wb1", :ip => "192.168.121.20", :cpus => 2, :memory => 2048},
-  {:name => "wb2", :ip => "192.168.121.30", :cpus => 2, :memory => 2048}
+  # {:name => "lb01", :ip => "192.168.121.10"},
+  {:name => "wb01", :ip => "192.168.121.20", :cpus => 1, :memory => 512},
+  {:name => "wb02", :ip => "192.168.121.30", :cpus => 1, :memory => 512}
 ]
 
 Vagrant.configure("2") do |config|
@@ -19,18 +19,18 @@ Vagrant.configure("2") do |config|
   # config.vm.box = "fedora/41-cloud-base"
   config.ssh.insert_key = false
   nodes.each do |node|
-    config.vm.define node[:name] do |deploy|
-      deploy.vm.hostname = node[:name]
-      deploy.vm.network :private_network, :ip => node[:ip]
-      config.vm.provider :libvirt do |lv|
+    config.vm.define "#{node[:name]}"  do |deploy|
+      deploy.vm.hostname = "#{node[:name]}"
+      deploy.vm.network :private_network, :ip => "#{node[:ip]}"
+      deploy.vm.provider :libvirt do |lv|
     #    lv.random_hostname = true
     #    lv.default_prefix = "lab"
         lv.storage_pool_name = "personal"
         lv.driver = "qemu"
         lv.qemu_use_agent = true
         lv.channel :type => "unix", :target_type => "virtio", :target_name => "org.qemu.guest_agent.0"
-        lv.cpus = 1
-        lv.memory = 1024
+        lv.cpus = "#{node[:cpus]}"
+        lv.memory = "#{node[:memory]}"
       end
     end
   end

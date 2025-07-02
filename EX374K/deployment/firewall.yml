@@ -1,0 +1,57 @@
+---
+- name: Configure the Apache HTTP Server
+  hosts: web
+  # strategy: free
+  serial: 1
+  gather_facts: false
+  tasks:
+    - name: Gather subset facts
+      ansible.builtin.setup:
+        gather_subset:
+          - '!all'
+          - '!min'
+          - 'pkg_mgr'
+          - 'service_mgr'
+          - 'network'
+      # tags:
+      #   - always
+      #   - install
+      #   - setup
+
+    - name: Ensure Firewalld Service is running and enabled
+      become: true
+      ansible.builtin.service:
+        name: firewalld
+        state: started
+        enabled: true
+      # tags:
+      #   - security
+      #   - setup
+
+    - name: Ensure custom traffic is perimmitted in the defined zones of firewalld
+      become: true
+      ansible.posix.firewalld:
+        zone: "{{ item.zone }}"
+        port: "{{ item.port | default(omit) }}"
+        protocol: "{{ item.protocol | default(omit) }}"
+        service: "{{ item.service | default(omit) }}"
+        state: enabled
+        # permanent: true
+        immediate: true
+      # tags:
+      #   - security
+      #   - setup
+  #     notify:
+  #       - Restart Firewalld
+
+  #   - name: Flush handlers
+  #     ansible.builtin.meta: flush_handlers
+  #     tags:
+  #       - always
+
+  # handlers:
+  #   - name: Restart Firewalld
+  #     become: true
+  #     ansible.builtin.service:
+  #       name: firewalld
+  #       state: restarted
