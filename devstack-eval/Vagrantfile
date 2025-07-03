@@ -1,0 +1,62 @@
+REQUIRED_PLUGINS = %w(vagrant-libvirt vagrant-hostsupdater vagrant-faster)
+exit unless REQUIRED_PLUGINS.all? do |plugin|
+  Vagrant.has_plugin?(plugin) || (
+    puts "The #{plugin} plugin is required. Please install it with:"
+    puts "$ vagrant plugin install #{plugin}"
+    false
+  )
+end
+
+nodes = [
+  #{:name => "dsn1", :cpus => 4, :memory => 8192, storage: "400G"},
+  {:name => "dsn0", :cpus => 2, :memory => 2048, storage: "10G"},
+]
+
+Vagrant.configure("2") do |config|
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+  config.vm.box = "centos/stream9"
+  # config.vm.box = "fedora/41-cloud-base"
+  # config.ssh.insert_key = false
+  config.vm.network :public_network, :dev => "br0", :mode => "bridge", :type => "bridge"
+  nodes.each do |node|
+    config.vm.define "#{node[:name]}" do |deploy|
+      deploy.vm.provider :libvirt do |domain|
+        #domain.host = "10.1.1.200"
+        domain.uri = "qemu+ssh://evan@10.1.1.200/system"
+        #domain.connect_via_ssh = true
+        domain.default_prefix = "lab-"
+#        domain.driver = "kvm"
+        #domain.qemu_use_session = true
+        domain.management_network_name = "bridged-network"
+        domain.cpus = "#{node[:cpus]}"
+        domain.memory = "#{node[:memory]}"
+        domain.qemu_use_agent = true
+        domain.channel :type => "unix", :target_type => "virtio", :target_name => "org.qemu.guest_agent.0"
+      end
+    end
+  end
+end
+
+# Vagrant.configure("2") do |config|
+#   config.vm.synced_folder ".", "/vagrant", disabled: true
+#   config.vm.define :kcn1 do |kcn1|
+#     kcn1.vm.network :public_network,
+#       :dev => "br0",
+#       :mode => "bridge",
+#       :type => "bridge"
+#     kcn1.vm.provider :libvirt do |domain|
+#       domain.qemu_use_session = true
+#       domain.uri = "qemu+ssh://10.1.1.200/system"
+#       domain.management_network_device = "br0"
+#       domain.default_prefix = "lab-"
+#       domain.driver = "qemu"
+#       domain.cpus = 2
+#       domain.memory = 2048
+#       # domain.serial :type => "file", :source => {:path => "/tmp/kcn1.log"}
+#       domain.storage :file, :device => :cdrom, :path => "/var/lib/libvirt/storage/software/talos-metal-amd64.iso", :readonly => true
+#       domain.storage :file, :size => "10G", :type => "qcow2"
+#       domain.boot 'hd'
+#       domain.boot 'cdrom'
+#     end
+#   end
+# en
