@@ -1,4 +1,4 @@
-REQUIRED_PLUGINS = %w(vagrant-libvirt vagrant-hostsupdater vagrant-faster)
+REQUIRED_PLUGINS = %w(vagrant-libvirt vagrant-faster)
 exit unless REQUIRED_PLUGINS.all? do |plugin|
   Vagrant.has_plugin?(plugin) || (
     puts "The #{plugin} plugin is required. Please install it with:"
@@ -8,8 +8,7 @@ exit unless REQUIRED_PLUGINS.all? do |plugin|
 end
 
 nodes = [
-  #{:name => "dsn1", :cpus => 4, :memory => 8192, storage: "400G"},
-  {:name => "dsn0", :cpus => 2, :memory => 2048, storage: "10G"},
+  {:name => "dsn1", :cpus => 4, :memory => 8192, storage: "400G"},
 ]
 
 Vagrant.configure("2") do |config|
@@ -17,7 +16,6 @@ Vagrant.configure("2") do |config|
   config.vm.box = "centos/stream9"
   # config.vm.box = "fedora/41-cloud-base"
   # config.ssh.insert_key = false
-  config.vm.network :public_network, :dev => "br0", :mode => "bridge", :type => "bridge"
   nodes.each do |node|
     config.vm.define "#{node[:name]}" do |deploy|
       deploy.vm.provider :libvirt do |domain|
@@ -36,27 +34,3 @@ Vagrant.configure("2") do |config|
     end
   end
 end
-
-# Vagrant.configure("2") do |config|
-#   config.vm.synced_folder ".", "/vagrant", disabled: true
-#   config.vm.define :kcn1 do |kcn1|
-#     kcn1.vm.network :public_network,
-#       :dev => "br0",
-#       :mode => "bridge",
-#       :type => "bridge"
-#     kcn1.vm.provider :libvirt do |domain|
-#       domain.qemu_use_session = true
-#       domain.uri = "qemu+ssh://10.1.1.200/system"
-#       domain.management_network_device = "br0"
-#       domain.default_prefix = "lab-"
-#       domain.driver = "qemu"
-#       domain.cpus = 2
-#       domain.memory = 2048
-#       # domain.serial :type => "file", :source => {:path => "/tmp/kcn1.log"}
-#       domain.storage :file, :device => :cdrom, :path => "/var/lib/libvirt/storage/software/talos-metal-amd64.iso", :readonly => true
-#       domain.storage :file, :size => "10G", :type => "qcow2"
-#       domain.boot 'hd'
-#       domain.boot 'cdrom'
-#     end
-#   end
-# en
