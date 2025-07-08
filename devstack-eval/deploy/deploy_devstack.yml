@@ -4,39 +4,55 @@
   hosts: node1
   become: true
   tasks:
-    - name: Enable EPEL.
-      ansible.builtin.dnf:
-        name: 'https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_facts.distribution_major_version }}.noarch.rpm'
-        disable_gpg_check: true
-        state: present
+    # - name: Enable EPEL.
+    #   ansible.builtin.dnf:
+    #     name: 'https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_facts.distribution_major_version }}.noarch.rpm'
+    #     disable_gpg_check: true
+    #     state: present
 
-    - name: Install git
+    - name: Ensure supporting packages are installed.
       ansible.builtin.dnf:
-        name: git
+        name:
+          - "git"
+          - "vim"
+          - "net-tools"
+          - "curl"
         state: present
 
     - name: Clone DevStack repository.
       ansible.builtin.git:
         repo: https://opendev.org/openstack/devstack/
-        dest: /opt/devstack
+        dest: /opt/stack/devstack
         version: stable/2025.1
 
     - name: Run stack user creation script.
-      ansible.builtin.command: /opt/devstack/tools/create-stack-user.sh
+      ansible.builtin.command: /opt/stack/devstack/tools/create-stack-user.sh
       register: create_stack_user # <- Registers the command output.
       changed_when: create_stack_user.rc != 0 # <- Uses the return code to define when the task has changed.
 
     - name: Change ownership of DevStack files.
       ansible.builtin.file:
-        path: /opt/devstack
+        path: /opt/stack
         owner: stack
         group: stack
         recurse: true
 
     - name: Copy DevStack config for standalone mode.
-      ansible.builtin.copy:
-        src: files/local.conf
-        dest: /opt/devstack/local.conf
+      ansible.builtin.template:
+        src: templates/local.conf
+        dest: /opt/stack/devstack/local.conf
         mode: preserve
         owner: stack
         group: stack
+
+    - name: Initialize DevStack.
+      ansible.builtin.shell: /opt/stack/devstack/stack.sh
+      args:
+        chdir: /opt/stack/devstack
+        executable: /bin/bash
+      become: true
+      become_user: stack
+      register: devstack_install # <- Registers the command output.
+      until: devstack_install is not failed
+      retries: 4
+      delay: 10
